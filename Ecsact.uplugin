@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "Ecsact",
+	"Description": "Ecsact integration for Unreal Engine",
+	"Category": "Other",
+	"CreatedBy": "Seaube",
+	"CreatedByURL": "https://seaube.com",
+	"DocsURL": "https://ecsact.dev/start/unreal",
+	"MarketplaceURL": "",
+	"SupportURL": "https://discord.gg/vKxQztg7gB",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "Ecsact",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "EcsactEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
