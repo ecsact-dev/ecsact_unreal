@@ -19,6 +19,7 @@ private:
 		const TArray<struct FFileChangeData>& FileChanges
 	) -> void;
 	auto OnReceiveEcsactCliJsonMessage(FString Json) -> void;
+	auto AddMenuEntry(class FMenuBuilder& MenuBuilder) -> void;
 
 public:
 	auto SpawnEcsactCli( //
