@@ -24,4 +24,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = Ecsact)
 	TArray<FString> Recipes;
+
+	auto GetValidRecipes() const -> TArray<FString>;
 };
