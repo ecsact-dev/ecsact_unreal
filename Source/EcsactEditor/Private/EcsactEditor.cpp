@@ -5,12 +5,15 @@
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "ISettingsContainer.h"
+#include "LevelEditor.h"
 #include "HAL/PlatformFileManager.h"
 #include "HAL/FileManagerGeneric.h"
 #include "FileHelpers.h"
 #include "DirectoryWatcherModule.h"
 #include "IDirectoryWatcher.h"
 #include "Json.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
 #include "EcsactSettings.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactEditorModule"
@@ -127,6 +130,18 @@ auto FEcsactEditorModule::StartupModule() -> void {
 		&FEcsactEditorModule::OnEcsactSettingsModified
 	);
 
+	auto& level_editor_module =
+		FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+	TSharedPtr<FExtender> menu_extender = MakeShareable(new FExtender());
+	menu_extender->AddMenuExtension(
+		"Tools",
+		EExtensionHook::After,
+		nullptr,
+		FMenuExtensionDelegate::CreateRaw(this, &FEcsactEditorModule::AddMenuEntry)
+	);
+
+	level_editor_module.GetMenuExtensibilityManager()->AddExtender(menu_extender);
+
 	auto* watcher = GetDirectoryWatcher();
 	watcher->RegisterDirectoryChangedCallback_Handle(
 		SourceDir(),
@@ -153,6 +168,36 @@ auto FEcsactEditorModule::ShutdownModule() -> void {
 	);
 	SourcesWatchHandle = {};
 	FEditorDelegates::OnEditorInitialized.RemoveAll(this);
+}
+
+auto FEcsactEditorModule::AddMenuEntry(FMenuBuilder& MenuBuilder) -> void {
+	MenuBuilder.BeginSection(
+		"EcsactTools",
+		LOCTEXT("EcsactToolsSectionTitle", "Ecsact")
+	);
+	{
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("EcsactRunCodegen", "Re-run codegen"),
+			LOCTEXT(
+				"EcsactRunCodegenTooltip",
+				"Re-runs the ecsact codegen. This usually happens automatically and is "
+				"not necessary to run manually from the menu."
+			),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateLambda([this] { RunCodegen(); }))
+		);
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("EcsactRebuild", "Rebuild runtime"),
+			LOCTEXT(
+				"EcsactRebuildTooltip",
+				"Rebuild the Ecsact runtime. This usually happens automatically and is "
+				"not necessary to run manually from the menu."
+			),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateLambda([this] { RunBuild(); }))
+		);
+	}
+	MenuBuilder.EndSection();
 }
 
 auto FEcsactEditorModule::OnProjectSourcesChanged(
