@@ -212,10 +212,11 @@ auto FEcsactEditorModule::RunCodegen() -> void {
 
 auto FEcsactEditorModule::RunBuild() -> void {
 	const auto* settings = GetDefault<UEcsactSettings>();
-	auto        ecsact_runtime_path = FPaths::Combine(
-    FPaths::ProjectDir(),
-    TEXT("Binaries/Win64/EcsactRuntime.dll")
-  );
+
+	auto ecsact_runtime_path = FPaths::Combine(
+		FPaths::ProjectDir(),
+		TEXT("Binaries/Win64/EcsactRuntime.dll")
+	);
 	auto temp_dir = FPaths::CreateTempFilename(TEXT("EcsactBuild"));
 
 	auto ecsact_files = GetAllEcsactFiles();
