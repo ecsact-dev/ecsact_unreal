@@ -14,7 +14,8 @@
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
 	"Installed": false,
-	"Modules": [
+	"Modules":
+	[
 		{
 			"Name": "Ecsact",
 			"Type": "Runtime",
