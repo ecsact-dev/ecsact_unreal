@@ -1,4 +1,5 @@
 #include "EcsactEditor.h"
+#include "Async/Async.h"
 #include "Async/TaskGraphInterfaces.h"
 #include "Editor.h"
 #include "ISettingsModule.h"
@@ -218,12 +219,32 @@ auto FEcsactEditorModule::RunBuild() -> void {
 		TEXT("Binaries/Win64/EcsactRuntime.dll")
 	);
 	auto temp_dir = FPaths::CreateTempFilename(TEXT("EcsactBuild"));
-
+	auto recipes = settings->GetValidRecipes();
 	auto ecsact_files = GetAllEcsactFiles();
+
+	if(ecsact_files.IsEmpty()) {
+		UE_LOG(
+			EcsactEditor,
+			Warning,
+			TEXT("There are no .ecsact files found in your Source directory")
+		);
+		return;
+	}
+
+	if(recipes.IsEmpty()) {
+		FMessageDialog::Open(
+			EAppMsgType::Ok,
+			LOCTEXT(
+				"NoRecipesErrorMessage",
+				"There are no recipes configured in your Ecsact plugin settings."
+			)
+		);
+		return;
+	}
+
 	auto args = TArray<FString>{
 		"build",
 		"--format=json",
-		"--recipe=rt_entt",
 		"-o",
 		ecsact_runtime_path,
 		"--temp=" + temp_dir,
@@ -238,6 +259,10 @@ auto FEcsactEditorModule::RunBuild() -> void {
 		case EEcsactBuildReportFilter::ErrorsAndWarnings:
 			args.Push("--report_filter=errors_and_warnings");
 			break;
+	}
+
+	for(const auto& recipe : recipes) {
+		args.Push("--recipe=" + recipe);
 	}
 
 	args.Append(ecsact_files);
@@ -378,6 +403,16 @@ auto FEcsactEditorModule::OnReceiveEcsactCliJsonMessage(FString Json) -> void {
 }
 
 auto FEcsactEditorModule::OnEcsactSettingsModified() -> bool {
+	const auto* settings = GetDefault<UEcsactSettings>();
+	static auto prev_valid_recipes = settings->GetValidRecipes();
+
+	auto valid_recipes = settings->GetValidRecipes();
+
+	if(prev_valid_recipes != valid_recipes) {
+		prev_valid_recipes = valid_recipes;
+		RunBuild();
+	}
+
 	return true;
 }
 
