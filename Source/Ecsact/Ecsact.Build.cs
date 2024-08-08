@@ -2,6 +2,10 @@ using UnrealBuildTool;
 using System.IO;
 using System.Diagnostics;
 using System;
+using System.Linq;
+using System.Collections.Generic;
+using UnrealBuildBase;
+using EpicGames.Core;
 
 [Serializable]
 public class EcsactSdkNotFound : Exception {
@@ -33,8 +37,11 @@ public class Ecsact : ModuleRules {
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
 
-		var ecsactSdkIncludeDir = GetEcsactSdkIncludeDir();
-		PublicIncludePaths.Add(ecsactSdkIncludeDir);
+		var EcsactSdkVersion = GetEcsactSdkVersion();
+		Environment.SetEnvironmentVariable("EcsactPlugin_SdkVersion", EcsactSdkVersion);
+		
+		var EcsactSdkIncludeDir = GetEcsactSdkIncludeDir();
+		PublicIncludePaths.Add(EcsactSdkIncludeDir);
 
 		// NOTE: For now these APIs are loaded on module startup
 		PublicDefinitions.AddRange(new string[] {
@@ -45,13 +52,64 @@ public class Ecsact : ModuleRules {
 			"ECSACT_SERIALIZE_API_LOAD_AT_RUNTIME",
 			"ECSACT_STATIC_API_LOAD_AT_RUNTIME",
 		});
+
+		var EcsactSources = GetEcsactSources();
+
+		if(EcsactSources.Length > 0) {
+			var CodegenArgs = new List<string>() {
+				"codegen",
+				"--format=json",
+				"--plugin=cpp_header",
+				"--plugin=systems_header",
+				"--plugin=cpp_systems_header",
+				"--plugin=cpp_systems_source"
+			};
+			CodegenArgs.AddRange(EcsactSources);
+			ExecEcsactCli(CodegenArgs);
+		}
+	}
+
+	private string[] GetEcsactSources() {
+		var projectRoot = GetProjectRoot(Target);
+		return Directory.GetFiles(
+			Path.Combine(projectRoot.FullName, "Source"),
+			"*.ecsact",
+			SearchOption.AllDirectories
+		);
+	}
+
+	private string GetEcsactSdkVersion() {
+		var version = "";
+
+		try {
+			var startInfo = new ProcessStartInfo();
+			startInfo.FileName = "ecsact";
+			startInfo.Arguments = "--version";
+			startInfo.RedirectStandardOutput = true;
+			startInfo.UseShellExecute = false;
+			startInfo.CreateNoWindow = true;
+
+			using(Process process = Process.Start(startInfo)) {
+				using(StreamReader reader = process.StandardOutput) {
+					version = reader.ReadToEnd().Trim();
+				}
+			}
+		} catch(Exception err) {
+			throw new EcsactSdkNotFound(err);
+		}
+
+		if(String.IsNullOrEmpty(version)) {
+			throw new EcsactSdkNotFound(null);
+		}
+
+		return version;
 	}
 
 	private string GetEcsactSdkIncludeDir() {
 		var includePath = "";
 
 		try {
-			ProcessStartInfo startInfo = new ProcessStartInfo();
+			var startInfo = new ProcessStartInfo();
 			startInfo.FileName = "ecsact";
 			startInfo.Arguments = "config include_dir";
 			startInfo.RedirectStandardOutput = true;
@@ -68,5 +126,48 @@ public class Ecsact : ModuleRules {
 		}
 
 		return includePath;
+	}
+
+	private void ExecEcsactCli(IList<string> Args) {
+		try {
+			var StartInfo = new ProcessStartInfo();
+			StartInfo.FileName = "ecsact";
+			foreach(var Arg in Args) {
+				StartInfo.ArgumentList.Add(Arg);
+			}
+			StartInfo.UseShellExecute = false;
+			StartInfo.CreateNoWindow = true;
+			StartInfo.RedirectStandardOutput = true;
+			StartInfo.RedirectStandardError = true;
+			var Proc = Process.Start(StartInfo);
+
+			var Line = "";
+			while((Line = Proc.StandardOutput.ReadLine()) != null) {
+				Console.WriteLine(Line);
+			}
+
+			Proc.WaitForExit();
+			if(Proc.ExitCode != 0) {
+				throw new BuildException("ecsact exited with code: " + Proc.ExitCode);
+			}
+		} catch(BuildException err) {
+			throw err;
+		} catch(Exception err) {
+			throw new EcsactSdkNotFound(err);
+		}
+	}
+
+	private DirectoryReference GetProjectRoot(ReadOnlyTargetRules Target) {
+		if (Target.ProjectFile != null) {
+			return Target.ProjectFile.Directory;
+		}
+
+		// Without a Target.ProjectFile we're probably installed as an Engine plugin.
+		// Only information we have about the project is the current directory.
+		var Root = new DirectoryReference(Directory.GetCurrentDirectory());
+		while (Root != null && !File.Exists(Path.Combine(Root.FullName, "*.uproject"))) {
+			Root = Root.ParentDirectory;
+		}
+		return Root;
 	}
 }
