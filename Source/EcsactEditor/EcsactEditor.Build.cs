@@ -1,4 +1,5 @@
 using UnrealBuildTool;
+using System.IO;
 
 public class EcsactEditor : ModuleRules {
 	public EcsactEditor(ReadOnlyTargetRules Target) : base(Target) {
@@ -26,11 +27,8 @@ public class EcsactEditor : ModuleRules {
 			"Slate",
 			"SlateCore",
 			"Json",
-			// ... add private dependencies that you statically link with here ...
 		});
 
-		DynamicallyLoadedModuleNames.AddRange(new string[] {
-			// ... add any modules that your module loads dynamically here ...
-		});
+		DynamicallyLoadedModuleNames.AddRange(new string[] {});
 	}
 }

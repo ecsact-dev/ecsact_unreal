@@ -24,6 +24,62 @@ static auto SourceDir() -> FString {
 	return FPaths::Combine(FPaths::ProjectDir(), "Source");
 }
 
+static auto PlatformBinariesDirname() -> FString {
+	auto platform_name = FString{FPlatformProperties::PlatformName()};
+
+	if(platform_name.Contains(TEXT("Windows"), ESearchCase::IgnoreCase)) {
+		return TEXT("Win64");
+	} else if(platform_name.Equals(TEXT("Mac"), ESearchCase::IgnoreCase)) {
+		return TEXT("Mac");
+	} else if(platform_name.Equals(TEXT("Linux"), ESearchCase::IgnoreCase)) {
+		return TEXT("Linux");
+	}
+
+	UE_LOG(
+		EcsactEditor,
+		Error,
+		TEXT("Failed to get platform binaries directory name from platform: %s"),
+		*platform_name
+	);
+
+	return TEXT("Unknown");
+}
+
+static auto PlatformEcsactPluginExtension() -> FString {
+	auto platform_name = FString{FPlatformProperties::PlatformName()};
+
+	if(platform_name.Contains(TEXT("Windows"), ESearchCase::IgnoreCase)) {
+		return TEXT(".dll");
+	} else if(platform_name.Equals(TEXT("Mac"), ESearchCase::IgnoreCase)) {
+		return TEXT(".dylib");
+	} else if(platform_name.Equals(TEXT("Linux"), ESearchCase::IgnoreCase)) {
+		return TEXT(".so");
+	}
+
+	UE_LOG(
+		EcsactEditor,
+		Error,
+		TEXT("Failed to get platform Ecsact plugin extension name from platform: %s"
+		),
+		*platform_name
+	);
+
+	return TEXT("");
+}
+
+static auto PluginBinariesDir() -> FString {
+	auto& fm = FPlatformFileManager::Get().GetPlatformFile();
+	auto  plugins_dir = FPaths::ProjectPluginsDir();
+	auto  plugin_dir = plugins_dir + "/" + "Ecsact";
+
+	return FPaths::Combine( //
+		FPaths::ProjectPluginsDir(),
+		"Ecsact",
+		"Binaries",
+		PlatformBinariesDirname()
+	);
+}
+
 static auto GetDirectoryWatcher() -> IDirectoryWatcher* {
 	auto& watcher = FModuleManager::LoadModuleChecked<FDirectoryWatcherModule>( //
 		TEXT("DirectoryWatcher")
@@ -151,6 +207,14 @@ auto FEcsactEditorModule::StartupModule() -> void {
 		),
 		SourcesWatchHandle
 	);
+	watcher->RegisterDirectoryChangedCallback_Handle(
+		PluginBinariesDir(),
+		IDirectoryWatcher::FDirectoryChanged::CreateRaw(
+			this,
+			&FEcsactEditorModule::OnPluginBinariesChanged
+		),
+		PluginBinariesWatchHandle
+	);
 
 	FEditorDelegates::OnEditorInitialized.AddRaw(
 		this,
@@ -166,7 +230,12 @@ auto FEcsactEditorModule::ShutdownModule() -> void {
 		SourceDir(),
 		SourcesWatchHandle
 	);
+	watcher->UnregisterDirectoryChangedCallback_Handle(
+		PluginBinariesDir(),
+		PluginBinariesWatchHandle
+	);
 	SourcesWatchHandle = {};
+	PluginBinariesWatchHandle = {};
 	FEditorDelegates::OnEditorInitialized.RemoveAll(this);
 }
 
@@ -216,12 +285,90 @@ auto FEcsactEditorModule::OnProjectSourcesChanged(
 		UE_LOG(
 			EcsactEditor,
 			Log,
-			TEXT("Ecsact files changed. Re-generating C++ ...")
+			TEXT("Ecsact files changed. Re-generating C++ and rebuilding runtime ...")
 		);
 
 		RunCodegen();
 		RunBuild();
 	}
+}
+
+auto FEcsactEditorModule::OnPluginBinariesChanged(
+	const TArray<FFileChangeData>& FileChanges
+) -> void {
+	auto any_codegen_plugins_changed = false;
+	auto plugin_ext = PlatformEcsactPluginExtension();
+	if(plugin_ext.IsEmpty()) {
+		return;
+	}
+
+	for(auto& change : FileChanges) {
+		if(!change.Filename.EndsWith(plugin_ext)) {
+			continue;
+		}
+
+		auto change_basename = FPaths::GetBaseFilename(change.Filename);
+		if(!change_basename.StartsWith("UnrealEditor-Ecsact")) {
+			continue;
+		}
+		if(!change_basename.Contains("CodegenPlugin")) {
+			continue;
+		}
+
+		auto dash_index = int32{};
+		if(change_basename.FindLastChar('-', dash_index)) {
+			auto plugin_name = change_basename.Mid(0, dash_index);
+			CodegenPluginHotReloadNames.Add(plugin_name, change_basename);
+		}
+
+		any_codegen_plugins_changed = true;
+	}
+
+	if(any_codegen_plugins_changed) {
+		UE_LOG(
+			EcsactEditor,
+			Log,
+			TEXT("Ecsact codegen plugins changed. Re-generating C++ ...")
+		);
+
+		RunCodegen();
+	}
+}
+
+auto FEcsactEditorModule::GetUnrealCodegenPlugins() -> TArray<FString> {
+	auto& fm = FPlatformFileManager::Get().GetPlatformFile();
+	auto  plugins_dir = FPaths::ProjectPluginsDir();
+	auto  plugin_dir = FPaths::Combine(plugins_dir, "Ecsact");
+
+	if(!fm.DirectoryExists(*plugin_dir)) {
+		UE_LOG(
+			EcsactEditor,
+			Error,
+			TEXT("Unable to find Ecsact Unreal integration plugin directory. Please "
+					 "make sure it is installed as 'Ecsact' and not by any other name")
+		);
+		return {};
+	}
+
+	auto codegen_plugin_name = CodegenPluginHotReloadNames.FindRef(
+		"UnrealEditor-EcsactUnrealCodegenPlugin",
+		"UnrealEditor-EcsactUnrealCodegenPlugin"
+	);
+
+	auto plugin_path = FPaths::Combine(
+		plugin_dir,
+		"Binaries",
+		PlatformBinariesDirname(),
+		codegen_plugin_name + PlatformEcsactPluginExtension()
+	);
+
+	if(fm.FileExists(*plugin_path)) {
+		return {plugin_path};
+	}
+
+	UE_LOG(EcsactEditor, Error, TEXT("Unable to find %s"), *plugin_path);
+
+	return {};
 }
 
 auto FEcsactEditorModule::RunCodegen() -> void {
@@ -234,6 +381,11 @@ auto FEcsactEditorModule::RunCodegen() -> void {
 		"--plugin=cpp_systems_header",
 		"--plugin=cpp_systems_source",
 	};
+
+	for(auto plugin : GetUnrealCodegenPlugins()) {
+		args.Add("--plugin=" + plugin);
+	}
+
 	args.Append(ecsact_files);
 
 	SpawnEcsactCli(
