@@ -2,9 +2,7 @@ using UnrealBuildTool;
 using System.IO;
 using System.Diagnostics;
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using UnrealBuildBase;
 using EpicGames.Core;
 
 [Serializable]
@@ -33,13 +31,29 @@ public class Ecsact : ModuleRules {
 			"SlateCore",
 		});
 
+		DynamicallyLoadedModuleNames.AddRange(new string[] {
+			"EcsactUnrealCodegenPlugin",
+		});
+
+		var EcsactUnrealCodegenPluginPath = Path.Combine(
+			ModuleDirectory,
+			"..",
+			"..",
+			"Binaries",
+			Target.Platform.ToString(),
+			"UnrealEditor-EcsactUnrealCodegenPlugin.dll"
+		);
+
 		if(Target.bBuildEditor) {
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
 
 		var EcsactSdkVersion = GetEcsactSdkVersion();
-		Environment.SetEnvironmentVariable("EcsactPlugin_SdkVersion", EcsactSdkVersion);
-		
+		Environment.SetEnvironmentVariable(
+			"EcsactPlugin_SdkVersion",
+			EcsactSdkVersion
+		);
+
 		var EcsactSdkIncludeDir = GetEcsactSdkIncludeDir();
 		PublicIncludePaths.Add(EcsactSdkIncludeDir);
 
@@ -64,6 +78,16 @@ public class Ecsact : ModuleRules {
 				"--plugin=cpp_systems_header",
 				"--plugin=cpp_systems_source"
 			};
+
+			// if(!File.Exists(EcsactUnrealCodegenPluginPath)) {
+			// 	Console.WriteLine(
+			// 		"warning: EcsactUnrealCodegenPlugin was not built. It should have "
+			// + 		"been shipped with the Ecsact Unreal integration plugin."
+			// 	);
+			// } else {
+			// 	CodegenArgs.Add($"--plugin={EcsactUnrealCodegenPluginPath}");
+			// }
+
 			CodegenArgs.AddRange(EcsactSources);
 			ExecEcsactCli(CodegenArgs);
 		}
@@ -158,14 +182,16 @@ public class Ecsact : ModuleRules {
 	}
 
 	private DirectoryReference GetProjectRoot(ReadOnlyTargetRules Target) {
-		if (Target.ProjectFile != null) {
+		if(Target.ProjectFile != null) {
 			return Target.ProjectFile.Directory;
 		}
 
-		// Without a Target.ProjectFile we're probably installed as an Engine plugin.
-		// Only information we have about the project is the current directory.
+		// Without a Target.ProjectFile we're probably installed as an Engine
+		// plugin. Only information we have about the project is the current
+		// directory.
 		var Root = new DirectoryReference(Directory.GetCurrentDirectory());
-		while (Root != null && !File.Exists(Path.Combine(Root.FullName, "*.uproject"))) {
+		while(Root != null &&
+					!File.Exists(Path.Combine(Root.FullName, "*.uproject"))) {
 			Root = Root.ParentDirectory;
 		}
 		return Root;
