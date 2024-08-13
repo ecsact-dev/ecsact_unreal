@@ -1,8 +1,16 @@
 #include <format>
+#include <array>
+#include <sstream>
+#include <string>
 #include "ecsact/runtime/meta.hh"
 #include "ecsact/codegen/plugin.hh"
+#include "ecsact/lang-support/lang-cc.hh"
 #include "ecsact/cpp_codegen_plugin_util.hh"
 
+using namespace std::string_literals;
+
+using ecsact::cc_lang_support::c_identifier;
+using ecsact::cc_lang_support::cpp_identifier;
 using ecsact::cpp_codegen_plugin_util::block;
 using ecsact::cpp_codegen_plugin_util::inc_header;
 using ecsact::cpp_codegen_plugin_util::inc_package_header;
@@ -13,29 +21,48 @@ constexpr int32_t GENERATED_SOURCE_INDEX = 1;
 inline auto inc_package_header_no_ext( //
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_package_id               pkg_id,
-	std::string                     extension = ".hh"
+	std::string                     suffix,
+	std::string                     header_extension = ".h"
 ) -> void {
 	namespace fs = std::filesystem;
 
 	auto main_ecsact_file_path = ecsact::meta::package_file_path(ctx.package_id);
 	if(ctx.package_id == pkg_id) {
-		main_ecsact_file_path.replace_extension(
-			main_ecsact_file_path.extension().string() + extension
-		);
+		main_ecsact_file_path =
+			fs::path{main_ecsact_file_path.replace_extension("").string() + suffix}
+				.replace_extension(header_extension);
 
 		inc_header(ctx, main_ecsact_file_path.filename().string());
 	} else {
-		auto cpp_header_path =
-			ecsact::meta::package_file_path(pkg_id).replace_extension("");
-		cpp_header_path.replace_extension(
-			cpp_header_path.extension().string() + extension
-		);
+		auto cpp_header_path = fs::path{
+			ecsact::meta::package_file_path(pkg_id).replace_extension("").string() +
+			suffix
+		};
+		cpp_header_path.replace_extension(header_extension);
 		if(main_ecsact_file_path.has_parent_path()) {
 			cpp_header_path =
 				fs::relative(cpp_header_path, main_ecsact_file_path.parent_path());
 		}
 		inc_header(ctx, cpp_header_path.filename().string());
 	}
+}
+
+auto ecsact_decl_name_to_pascal(const std::string& input) -> std::string {
+	auto result = std::stringstream{};
+	auto capitalize_next = true;
+
+	for(char ch : input) {
+		if(ch == '.') {
+			capitalize_next = true; // Capitalize the next character after a separator
+		} else if(capitalize_next) {
+			result << static_cast<char>(std::toupper(ch));
+			capitalize_next = false;
+		} else {
+			result << static_cast<char>(std::tolower(ch));
+		}
+	}
+
+	return result.str();
 }
 
 auto ecsact_codegen_output_filenames( //
@@ -51,9 +78,9 @@ auto ecsact_codegen_output_filenames( //
 			.replace_extension("")
 			.string();
 	ecsact::set_codegen_plugin_output_filenames(
-		{
-			pkg_basename + "__ecsact__ue.h", // GENERATED_HEADER_INDEX
-			pkg_basename + "__ecsact__ue.cpp", // GENERATED_SOURCE_INDEX
+		std::array{
+			pkg_basename + "__ecsact__ue.h"s, // GENERATED_HEADER_INDEX
+			pkg_basename + "__ecsact__ue.cpp"s, // GENERATED_SOURCE_INDEX
 		},
 		out_filenames,
 		max_filenames,
@@ -66,29 +93,43 @@ auto ecsact_codegen_plugin_name() -> const char* {
 	return "Unreal";
 }
 
-static auto generate_header(ecsact::codegen_plugin_context& ctx) -> void {
+static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	ctx.writef("#pragma once\n\n");
 
 	inc_header(ctx, "CoreMinimal.h");
 	inc_header(ctx, "UObject/Interface.h");
-	inc_package_header(ctx, package_id, ".hh");
-	inc_package_header_no_ext(ctx, package_id, "__ecsact__ue.generated.h");
+	inc_package_header(ctx, ctx.package_id, ".hh");
+	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.generated.h");
+
+	auto prefix =
+		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
 
 	ctx.writef("\n\n");
 
-	for(auto comp_id : ecsact::meta::get_component_ids(package_id)) {
+	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
 		auto comp_name = ecsact::meta::component_name(comp_id);
-		ctx.writef("UINTERFACE(MinimalAPI, Blueprintable)\n");
+		ctx.write(
+			"UINTERFACE(MinimalAPI, Blueprintable, meta = (DisplayName = \"",
+			std::format(
+				"requires {} (ecsact)",
+				ecsact::meta::decl_full_name(comp_id)
+			),
+			"\"))\n"
+		);
 		block(
 			ctx,
-			std::format("class U{}Interface : public UInterface", comp_name),
+			std::format(
+				"class UEcsactRequires{}{} : public UInterface",
+				prefix,
+				comp_name
+			),
 			[&] { ctx.writef("GENERATED_BODY()"); }
 		);
 		ctx.writef(";\n");
 
 		block(
 			ctx,
-			std::format("class I{}Interface : public UInterface", comp_name),
+			std::format("class IEcsactRequires{}{}", prefix, comp_name),
 			[&] {
 				ctx.writef("GENERATED_BODY()\n");
 				ctx.indentation -= 1;
@@ -102,7 +143,7 @@ static auto generate_header(ecsact::codegen_plugin_context& ctx) -> void {
 	}
 }
 
-static auto generate_source(ecsact::codegen_plugin_context& ctx) -> void {
+static auto generate_source(ecsact::codegen_plugin_context ctx) -> void {
 }
 
 auto ecsact_codegen_plugin(

@@ -25,6 +25,11 @@
 			"Name": "EcsactEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "EcsactUnrealCodegenPlugin",
+			"Type": "Editor",
+			"LoadingPhase": "None"
 		}
 	]
 }
