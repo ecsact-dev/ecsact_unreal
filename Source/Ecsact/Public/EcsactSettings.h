@@ -5,12 +5,14 @@
 #include "EcsactRunner.h"
 #include "EcsactSettings.generated.h"
 
+#if WITH_EDITOR
 UENUM()
 enum class EEcsactBuildReportFilter : uint8 {
 	None,
 	ErrorOnly,
 	ErrorsAndWarnings,
 };
+#endif
 
 // clang-format off
 UENUM()
@@ -23,17 +25,22 @@ enum class EEcsactRuntimeRunnerType : uint8 {
 
 UCLASS(Config = Ecsact, DefaultConfig)
 
-class ECSACTEDITOR_API UEcsactSettings : public UObject {
+class ECSACT_API UEcsactSettings : public UObject {
 	GENERATED_BODY()
 
 public:
 	UEcsactSettings();
 
+#if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Config, Category = "Build")
 	EEcsactBuildReportFilter BuildReportFilter;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Build")
 	TArray<FString> Recipes;
+
+	auto GetValidRecipes() const -> TArray<FString>;
+
+#endif
 
 	UPROPERTY(EditAnywhere, Config, Category = "Runtime")
 	EEcsactRuntimeRunnerType Runner;
@@ -48,6 +55,4 @@ public:
 		)
 	)
 	TSubclassOf<UEcsactRunner> CustomRunnerClass;
-
-	auto GetValidRecipes() const -> TArray<FString>;
 };

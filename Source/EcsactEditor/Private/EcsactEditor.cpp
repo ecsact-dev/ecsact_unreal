@@ -2,18 +2,17 @@
 #include "Async/Async.h"
 #include "Async/TaskGraphInterfaces.h"
 #include "Editor.h"
+#include "Engine/GameViewportClient.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "ISettingsContainer.h"
 #include "LevelEditor.h"
 #include "HAL/PlatformFileManager.h"
-#include "HAL/FileManagerGeneric.h"
-#include "FileHelpers.h"
 #include "DirectoryWatcherModule.h"
 #include "IDirectoryWatcher.h"
-#include "Json.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
+#include "Serialization/JsonReader.h"
 #include "EcsactSettings.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactEditorModule"
@@ -181,6 +180,7 @@ auto FEcsactEditorModule::StartupModule() -> void {
 		GetMutableDefault<UEcsactSettings>()
 	);
 	check(settings_section.IsValid());
+
 	settings_section->OnModified().BindRaw(
 		this,
 		&FEcsactEditorModule::OnEcsactSettingsModified

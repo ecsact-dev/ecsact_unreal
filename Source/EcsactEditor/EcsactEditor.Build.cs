@@ -18,6 +18,8 @@ public class EcsactEditor : ModuleRules {
 			"Engine",
 			"UnrealEd",
 			"Ecsact",
+			"Settings",
+			"PropertyEditor",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {
