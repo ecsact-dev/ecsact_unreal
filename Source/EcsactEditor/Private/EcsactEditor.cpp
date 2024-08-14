@@ -415,7 +415,11 @@ auto FEcsactEditorModule::RunBuild() -> void {
 		FPaths::ProjectDir(),
 		TEXT("Binaries/Win64/EcsactRuntime.dll")
 	);
-	auto temp_dir = FPaths::CreateTempFilename(TEXT("EcsactBuild"));
+	auto temp_dir = FPaths::ConvertRelativePathToFull(FPaths::Combine(
+		FPaths::ProjectIntermediateDir(),
+		"Temp",
+		FPaths::CreateTempFilename(TEXT("EcsactBuild"))
+	));
 	auto recipes = settings->GetValidRecipes();
 	auto ecsact_files = GetAllEcsactFiles();
 
