@@ -17,8 +17,7 @@ public class EcsactEditor : ModuleRules {
 			"Core",
 			"Engine",
 			"UnrealEd",
-			// ... add other public dependencies that you statically link with here
-			// ...
+			"Ecsact",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {

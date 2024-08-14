@@ -2,6 +2,7 @@
 #include "CoreGlobals.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/Paths.h"
+#include "EcsactAsyncRunner.h"
 #include "ecsact/runtime.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactModule"
@@ -43,12 +44,20 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 #define LOAD_ECSACT_FN(fn, UNUSED_PARAM)                           \
 	fn = reinterpret_cast<decltype(fn)>(                             \
 		FPlatformProcess::GetDllExport(EcsactRuntimeHandle, TEXT(#fn)) \
-	)
+	);                                                               \
+	if(fn != nullptr) {                                              \
+		UE_LOG(Ecsact, Log, TEXT("loaded %s"), TEXT(#fn));             \
+	} else {                                                         \
+		UE_LOG(Ecsact, Error, TEXT("failed to load %s"), TEXT(#fn));   \
+	}                                                                \
+	static_assert(true, "require ;")
 	FOR_EACH_ECSACT_API_FN(LOAD_ECSACT_FN);
 #undef LOAD_ECSACT_FN
+	StartRunner();
 }
 
 auto FEcsactModule::UnloadEcsactRuntime() -> void {
+	StopRunner();
 	if(EcsactRuntimeHandle) {
 		FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
 		EcsactRuntimeHandle = nullptr;
@@ -86,6 +95,19 @@ auto FEcsactModule::OnPreBeginPIE(bool _) -> void {
 
 auto FEcsactModule::OnEndPIE(bool _) -> void {
 	UnloadEcsactRuntime();
+}
+
+auto FEcsactModule::StartRunner() -> void {
+	Runner = NewObject<UEcsactAsyncRunner>();
+	Runner->AddToRoot();
+}
+
+auto FEcsactModule::StopRunner() -> void {
+	if(Runner != nullptr) {
+		Runner->RemoveFromRoot();
+		Runner->ConditionalBeginDestroy();
+		Runner = nullptr;
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
