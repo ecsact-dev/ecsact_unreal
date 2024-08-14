@@ -1,5 +1,6 @@
 #include "Ecsact.h"
 #include "CoreGlobals.h"
+#include "EcsactSettings.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/Paths.h"
 #include "EcsactAsyncRunner.h"
@@ -98,8 +99,45 @@ auto FEcsactModule::OnEndPIE(bool _) -> void {
 }
 
 auto FEcsactModule::StartRunner() -> void {
-	Runner = NewObject<UEcsactAsyncRunner>();
-	Runner->AddToRoot();
+	const auto* settings = GetDefault<UEcsactSettings>();
+
+	if(Runner != nullptr) {
+		UE_LOG(
+			Ecsact,
+			Warning,
+			TEXT("StartRunner() was called while runner was already running. "
+					 "Stopping previous one before starting new.")
+		);
+		StopRunner();
+	}
+
+	switch(settings->Runner) {
+		case EEcsactRuntimeRunnerType::Automatic:
+			if(ecsact_async_flush_events == nullptr) {
+				Runner = NewObject<UEcsactSyncRunner>();
+			} else {
+				Runner = NewObject<UEcsactAsyncRunner>();
+			}
+			break;
+		case EEcsactRuntimeRunnerType::Asynchronous:
+			Runner = NewObject<UEcsactAsyncRunner>();
+			break;
+		case EEcsactRuntimeRunnerType::Custom:
+			if(settings->CustomRunnerClass != nullptr) {
+				Runner = NewObject<UEcsactRunner>(nullptr, settings->CustomRunnerClass);
+			}
+			break;
+	}
+
+	if(Runner != nullptr) {
+		UE_LOG(
+			Ecsact,
+			Verbose,
+			TEXT("Using ecsact runner: %s"),
+			*Runner->StaticClass()->GetName()
+		);
+		Runner->AddToRoot();
+	}
 }
 
 auto FEcsactModule::StopRunner() -> void {
