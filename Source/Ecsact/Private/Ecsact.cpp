@@ -14,6 +14,13 @@ DEFINE_LOG_CATEGORY(Ecsact);
 FOR_EACH_ECSACT_API_FN(INIT_ECSACT_API_FN, UNUSED_PARAM);
 #undef INIT_ECSACT_API_FN
 
+FEcsactModule* FEcsactModule::Self = nullptr;
+
+auto FEcsactModule::Get() -> FEcsactModule& {
+	check(Self != nullptr);
+	return *Self;
+}
+
 auto FEcsactModule::Abort() -> void {
 #ifdef WITH_EDITOR
 	if(GEditor) {
@@ -70,6 +77,7 @@ auto FEcsactModule::UnloadEcsactRuntime() -> void {
 }
 
 auto FEcsactModule::StartupModule() -> void {
+	Self = this;
 	if(!GIsEditor) {
 		LoadEcsactRuntime();
 	}
@@ -88,6 +96,7 @@ auto FEcsactModule::ShutdownModule() -> void {
 	FEditorDelegates::PreBeginPIE.RemoveAll(this);
 	FEditorDelegates::EndPIE.RemoveAll(this);
 #endif
+	Self = nullptr;
 }
 
 auto FEcsactModule::OnPreBeginPIE(bool _) -> void {

@@ -6,8 +6,11 @@
 DECLARE_LOG_CATEGORY_EXTERN(Ecsact, Log, All);
 
 class FEcsactModule : public IModuleInterface {
-	void*                EcsactRuntimeHandle;
-	class UEcsactRunner* Runner;
+	friend class EcsactUnrealExecution;
+
+	static FEcsactModule* Self;
+	void*                 EcsactRuntimeHandle;
+	class UEcsactRunner*  Runner;
 
 	auto LoadEcsactRuntime() -> void;
 	auto UnloadEcsactRuntime() -> void;
@@ -19,6 +22,8 @@ class FEcsactModule : public IModuleInterface {
 	auto StopRunner() -> void;
 
 public:
+	static auto Get() -> FEcsactModule&;
+
 	auto StartupModule() -> void override;
 	auto ShutdownModule() -> void override;
 };

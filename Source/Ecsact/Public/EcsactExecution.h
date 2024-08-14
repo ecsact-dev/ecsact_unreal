@@ -14,4 +14,9 @@ public:
 	 * SEE: https://github.com/ecsact-dev/ecsact_parse/issues/163
 	 */
 	static auto DeltaTime() -> float;
+
+	/**
+	 *
+	 */
+	static auto Runner() -> class UEcsactRunner*;
 };
