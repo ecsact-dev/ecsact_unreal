@@ -123,23 +123,24 @@ auto FEcsactModule::StartRunner() -> void {
 		StopRunner();
 	}
 
-	switch(settings->Runner) {
-		case EEcsactRuntimeRunnerType::Automatic:
-			if(ecsact_async_flush_events == nullptr) {
-				Runner = NewObject<UEcsactSyncRunner>();
-			} else {
-				Runner = NewObject<UEcsactAsyncRunner>();
-			}
-			break;
-		case EEcsactRuntimeRunnerType::Asynchronous:
-			Runner = NewObject<UEcsactAsyncRunner>();
-			break;
-		case EEcsactRuntimeRunnerType::Custom:
-			if(settings->CustomRunnerClass != nullptr) {
-				Runner = NewObject<UEcsactRunner>(nullptr, settings->CustomRunnerClass);
-			}
-			break;
-	}
+	// switch(settings->Runner) {
+	// 	case EEcsactRuntimeRunnerType::Automatic:
+	// 		if(ecsact_async_flush_events == nullptr) {
+	// 			Runner = NewObject<UEcsactSyncRunner>();
+	// 		} else {
+	// 			Runner = NewObject<UEcsactAsyncRunner>();
+	// 		}
+	// 		break;
+	// 	case EEcsactRuntimeRunnerType::Asynchronous:
+	// 		Runner = NewObject<UEcsactAsyncRunner>();
+	// 		break;
+	// 	case EEcsactRuntimeRunnerType::Custom:
+	// 		if(settings->CustomRunnerClass != nullptr) {
+	// 			Runner = NewObject<UEcsactRunner>(nullptr,
+	// settings->CustomRunnerClass);
+	// 		}
+	// 		break;
+	// }
 
 	if(Runner != nullptr) {
 		UE_LOG(
