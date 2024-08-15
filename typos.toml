@@ -3,4 +3,4 @@ extend-exclude = ["CHANGELOG.md"]
 
 [default]
 extend-ignore-re = ["(?Rm)^.*(#|//)\\s*typos:disable-line$"]
-extend-ignore-words-re = ["UE"]
+extend-ignore-words-re = ["UE", "ue"]
