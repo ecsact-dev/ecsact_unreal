@@ -12,5 +12,8 @@ UCLASS(NotBlueprintable)
 class UEcsactAsyncRunner : public UEcsactRunner {
 	GENERATED_BODY()
 public:
+	UPROPERTY()
+	class UEcsactUnrealEventsCollector* EventsCollector;
+
 	auto Tick(float DeltaTime) -> void override;
 };

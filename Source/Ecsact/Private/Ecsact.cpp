@@ -2,6 +2,7 @@
 #include "CoreGlobals.h"
 #include "EcsactSettings.h"
 #include "HAL/PlatformProcess.h"
+#include "Logging/LogVerbosity.h"
 #include "Misc/Paths.h"
 #include "EcsactAsyncRunner.h"
 #include "ecsact/runtime.h"
@@ -35,6 +36,7 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 		FPaths::ProjectDir(),
 		TEXT("Binaries/Win64/EcsactRuntime.dll")
 	);
+	UE_LOG(Ecsact, Log, TEXT("Loading ecsact runtime %s"), *ecsact_runtime_path);
 
 	EcsactRuntimeHandle = FPlatformProcess::GetDllHandle(*ecsact_runtime_path);
 
@@ -65,6 +67,8 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 }
 
 auto FEcsactModule::UnloadEcsactRuntime() -> void {
+	UE_LOG(Ecsact, Log, TEXT("Unloading ecsact runtime"));
+
 	StopRunner();
 	if(EcsactRuntimeHandle) {
 		FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
