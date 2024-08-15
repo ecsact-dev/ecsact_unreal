@@ -144,9 +144,9 @@ auto FEcsactModule::StartRunner() -> void {
 	if(Runner != nullptr) {
 		UE_LOG(
 			Ecsact,
-			Verbose,
+			Log,
 			TEXT("Using ecsact runner: %s"),
-			*Runner->StaticClass()->GetName()
+			*Runner->GetClass()->GetName()
 		);
 		Runner->AddToRoot();
 	}
