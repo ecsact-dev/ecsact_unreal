@@ -70,14 +70,15 @@ auto FEcsactModule::UnloadEcsactRuntime() -> void {
 	UE_LOG(Ecsact, Log, TEXT("Unloading ecsact runtime"));
 
 	StopRunner();
-	if(EcsactRuntimeHandle) {
-		FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
-		EcsactRuntimeHandle = nullptr;
-	}
 
 #define RESET_ECSACT_FN(fn, UNUSED_PARAM) fn = nullptr
 	FOR_EACH_ECSACT_API_FN(RESET_ECSACT_FN);
 #undef RESET_ECSACT_FN
+
+	if(EcsactRuntimeHandle) {
+		FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
+		EcsactRuntimeHandle = nullptr;
+	}
 }
 
 auto FEcsactModule::StartupModule() -> void {
@@ -156,7 +157,6 @@ auto FEcsactModule::StartRunner() -> void {
 auto FEcsactModule::StopRunner() -> void {
 	if(Runner != nullptr) {
 		Runner->RemoveFromRoot();
-		Runner->ConditionalBeginDestroy();
 		Runner = nullptr;
 	}
 }
