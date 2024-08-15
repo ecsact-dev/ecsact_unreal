@@ -4,6 +4,7 @@
 #include "ecsact/runtime/core.h"
 
 auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
+	UE_LOG(Ecsact, Log, TEXT("SYNC RUNNER TICK()"));
 	if(ecsact_execute_systems == nullptr) {
 		UE_LOG(Ecsact, Error, TEXT("ecsact_execute_systems is unavailable"));
 		return;
@@ -25,4 +26,8 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 	if(err != ECSACT_EXEC_SYS_OK) {
 		UE_LOG(Ecsact, Error, TEXT("Ecsact execution failed"));
 	}
+}
+
+auto UEcsactSyncRunner::GetStatId() const -> TStatId {
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UEcsactSyncRunner, STATGROUP_Tickables);
 }

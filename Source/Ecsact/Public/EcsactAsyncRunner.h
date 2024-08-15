@@ -16,4 +16,5 @@ public:
 	class UEcsactUnrealEventsCollector* EventsCollector;
 
 	auto Tick(float DeltaTime) -> void override;
+	auto GetStatId() const -> TStatId override;
 };
