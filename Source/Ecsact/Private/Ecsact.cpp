@@ -57,8 +57,6 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 	);                                                               \
 	if(fn != nullptr) {                                              \
 		UE_LOG(Ecsact, Log, TEXT("loaded %s"), TEXT(#fn));             \
-	} else {                                                         \
-		UE_LOG(Ecsact, Error, TEXT("failed to load %s"), TEXT(#fn));   \
 	}                                                                \
 	static_assert(true, "require ;")
 	FOR_EACH_ECSACT_API_FN(LOAD_ECSACT_FN);
