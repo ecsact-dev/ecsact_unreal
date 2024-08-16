@@ -16,4 +16,5 @@ public:
 	ecsact_registry_id registry_id = ECSACT_INVALID_ID(registry);
 
 	auto Tick(float DeltaTime) -> void override;
+	auto GetStatId() const -> TStatId override;
 };

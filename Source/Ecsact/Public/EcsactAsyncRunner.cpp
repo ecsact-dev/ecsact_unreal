@@ -15,3 +15,7 @@ auto UEcsactAsyncRunner::Tick(float DeltaTime) -> void {
 		ecsact_async_flush_events(evc_c, nullptr);
 	}
 }
+
+auto UEcsactAsyncRunner::GetStatId() const -> TStatId {
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UEcsactAsyncRunner, STATGROUP_Tickables);
+}

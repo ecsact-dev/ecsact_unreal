@@ -26,3 +26,7 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 		UE_LOG(Ecsact, Error, TEXT("Ecsact execution failed"));
 	}
 }
+
+auto UEcsactSyncRunner::GetStatId() const -> TStatId {
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UEcsactSyncRunner, STATGROUP_Tickables);
+}
