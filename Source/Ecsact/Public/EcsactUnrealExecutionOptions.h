@@ -76,7 +76,4 @@ public:
 		ExecOpts.remove_components_length = RemoveComponentList.Num();
 		ExecOpts.remove_components = RemoveComponentList.GetData();
 	}
-
-	inline auto DestroyEntity(ecsact_entity_id Entity) -> void {
-	}
 };
