@@ -5,7 +5,6 @@
 #include "ecsact/runtime/common.h"
 
 auto UEcsactAsyncRunner::Tick(float DeltaTime) -> void {
-	UE_LOG(Ecsact, Log, TEXT("ASYNC RUNNER TICK()"));
 	if(ecsact_async_flush_events == nullptr) {
 		UE_LOG(Ecsact, Error, TEXT("ecsact_async_flush_events is unavailable"));
 	} else {

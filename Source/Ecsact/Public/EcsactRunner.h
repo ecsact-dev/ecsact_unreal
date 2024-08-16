@@ -12,4 +12,5 @@ class UEcsactRunner : public UObject, public FTickableGameObject {
 public:
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
+	auto IsTickable() const -> bool override;
 };

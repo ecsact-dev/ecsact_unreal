@@ -4,7 +4,6 @@
 #include "ecsact/runtime/core.h"
 
 auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
-	UE_LOG(Ecsact, Log, TEXT("SYNC RUNNER TICK()"));
 	if(ecsact_execute_systems == nullptr) {
 		UE_LOG(Ecsact, Error, TEXT("ecsact_execute_systems is unavailable"));
 		return;
