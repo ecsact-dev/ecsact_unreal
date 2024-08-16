@@ -26,7 +26,7 @@ enum class EEcsactRuntimeRunnerType : uint8 {
 UCLASS(Config = Ecsact, DefaultConfig)
 
 class ECSACT_API UEcsactSettings : public UObject {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 
 public:
 	UEcsactSettings();

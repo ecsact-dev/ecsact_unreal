@@ -9,7 +9,7 @@
 UCLASS(Abstract)
 
 class UEcsactRunner : public UObject, public FTickableGameObject {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 
 protected:
 	UPROPERTY()

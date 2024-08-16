@@ -123,7 +123,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				prefix,
 				comp_name
 			),
-			[&] { ctx.writef("GENERATED_BODY()"); }
+			[&] { ctx.writef("GENERATED_BODY() // NOLINT"); }
 		);
 		ctx.writef(";\n");
 
@@ -131,7 +131,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 			ctx,
 			std::format("class IEcsactRequires{}{}", prefix, comp_name),
 			[&] {
-				ctx.writef("GENERATED_BODY()\n");
+				ctx.writef("GENERATED_BODY() // NOLINT\n");
 				ctx.indentation -= 1;
 				ctx.writef("\n");
 				ctx.writef("public:");

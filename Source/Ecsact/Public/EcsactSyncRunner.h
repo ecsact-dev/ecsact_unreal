@@ -10,7 +10,7 @@
 UCLASS(NotBlueprintable)
 
 class UEcsactSyncRunner : public UEcsactRunner {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 public:
 	// TODO: Put this somewhere good.
 	ecsact_registry_id registry_id = ECSACT_INVALID_ID(registry);

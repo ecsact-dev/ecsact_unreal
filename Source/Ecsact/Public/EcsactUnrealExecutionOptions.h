@@ -8,7 +8,7 @@
 UCLASS()
 
 class UEcsactUnrealExecutionOptions : public UObject {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 
 	TArray<ecsact_action>       ActionList;
 	TArray<ecsact_component>    AddComponentList;

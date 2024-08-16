@@ -10,7 +10,7 @@
 UCLASS(NotBlueprintable)
 
 class UEcsactAsyncRunner : public UEcsactRunner {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 public:
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;

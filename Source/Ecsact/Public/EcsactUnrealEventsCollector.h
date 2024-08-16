@@ -7,7 +7,7 @@
 UCLASS()
 
 class UEcsactUnrealEventsCollector : public UObject {
-	GENERATED_BODY()
+	GENERATED_BODY() // NOLINT
 
 	ecsact_execution_events_collector evc;
 
