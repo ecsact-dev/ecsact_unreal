@@ -39,5 +39,8 @@ auto UEcsactAsyncRunner::EnqueueExecutionOptions() -> void {
 }
 
 auto UEcsactAsyncRunner::GetStatId() const -> TStatId {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UEcsactAsyncRunner, STATGROUP_Tickables);
+	RETURN_QUICK_DECLARE_CYCLE_STAT( // NOLINT
+		UEcsactAsyncRunner,
+		STATGROUP_Tickables
+	);
 }

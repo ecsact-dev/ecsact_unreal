@@ -40,5 +40,8 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 }
 
 auto UEcsactSyncRunner::GetStatId() const -> TStatId {
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UEcsactSyncRunner, STATGROUP_Tickables);
+	RETURN_QUICK_DECLARE_CYCLE_STAT( // NOLINT
+		UEcsactSyncRunner,
+		STATGROUP_Tickables
+	);
 }
