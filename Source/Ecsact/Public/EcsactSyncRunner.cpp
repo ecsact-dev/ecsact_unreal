@@ -1,5 +1,7 @@
 #include "EcsactSyncRunner.h"
 #include "Ecsact.h"
+#include "EcsactUnrealExecutionOptions.h"
+#include "EcsactUnrealEventsCollector.h"
 #include "EcsactExecution.h"
 #include "ecsact/runtime/core.h"
 
@@ -26,7 +28,12 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 		evc_c = EventsCollector->GetCEVC();
 	}
 
-	auto err = ecsact_execute_systems(registry_id, 1, nullptr, evc_c);
+	ecsact_execution_options* exec_opts = nullptr;
+	if(ExecutionOptions != nullptr && ExecutionOptions->IsNotEmpty()) {
+		exec_opts = ExecutionOptions->GetCPtr();
+	}
+
+	auto err = ecsact_execute_systems(registry_id, 1, exec_opts, evc_c);
 	if(err != ECSACT_EXEC_SYS_OK) {
 		UE_LOG(Ecsact, Error, TEXT("Ecsact execution failed"));
 	}

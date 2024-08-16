@@ -14,4 +14,11 @@ class UEcsactAsyncRunner : public UEcsactRunner {
 public:
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
+
+	/**
+	 * Usually execution options are enqueued during `Tick`, but if you'd prefer
+	 * to enqueue them earlier then you can call this function to immediate
+	 * enqueue the execution options.
+	 */
+	auto EnqueueExecutionOptions() -> void;
 };
