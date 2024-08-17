@@ -29,6 +29,7 @@ public class Ecsact : ModuleRules {
 			"Engine",
 			"Slate",
 			"SlateCore",
+			"Kismet",
 		});
 
 		DynamicallyLoadedModuleNames.AddRange(new string[] {
