@@ -4,8 +4,8 @@
 #include "CoreMinimal.h"
 #include "Tickable.h"
 #include "UObject/NoExportTypes.h"
-#include "EcsactRunner.h"
-#include "EcsactAsyncRunnerEvents.h"
+#include "EcsactUnreal/EcsactRunner.h"
+#include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "EcsactAsyncRunner.generated.h"
 
 UCLASS(NotBlueprintable)

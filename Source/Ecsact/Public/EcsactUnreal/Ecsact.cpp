@@ -1,10 +1,10 @@
 #include "Ecsact.h"
 #include "CoreGlobals.h"
-#include "EcsactSettings.h"
+#include "EcsactUnreal/EcsactSettings.h"
 #include "HAL/PlatformProcess.h"
 #include "Logging/LogVerbosity.h"
 #include "Misc/Paths.h"
-#include "EcsactAsyncRunner.h"
+#include "EcsactUnreal/EcsactAsyncRunner.h"
 #include "ecsact/runtime.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactModule"

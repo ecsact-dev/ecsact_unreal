@@ -1,8 +1,8 @@
-#include "EcsactSyncRunner.h"
-#include "Ecsact.h"
-#include "EcsactUnrealExecutionOptions.h"
-#include "EcsactUnrealEventsCollector.h"
-#include "EcsactExecution.h"
+#include "EcsactUnreal/EcsactSyncRunner.h"
+#include "EcsactUnreal/Ecsact.h"
+#include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "EcsactUnreal/EcsactUnrealEventsCollector.h"
+#include "EcsactUnreal/EcsactExecution.h"
 #include "ecsact/runtime/core.h"
 
 auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "EcsactRunner.h"
+#include "EcsactUnreal/EcsactRunner.h"
 #include "EcsactSettings.generated.h"
 
 #if WITH_EDITOR

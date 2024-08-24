@@ -13,7 +13,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "Serialization/JsonReader.h"
-#include "EcsactSettings.h"
+#include "EcsactUnreal/EcsactSettings.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactEditorModule"
 

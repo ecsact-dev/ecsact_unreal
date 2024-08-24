@@ -1,8 +1,8 @@
-#include "EcsactAsyncConnectBlueprintAction.h"
-#include "EcsactExecution.h"
-#include "EcsactAsyncRunnerEvents.h"
+#include "EcsactUnreal/Blueprint/EcsactAsyncConnectBlueprintAction.h"
+#include "EcsactUnreal/EcsactExecution.h"
+#include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "ecsact/runtime/async.h"
-#include "Ecsact.h"
+#include "EcsactUnreal/Ecsact.h"
 
 auto UEcsactAsyncConnectBlueprintAction::AsyncConnect( //
 	const FString& ConnectionString

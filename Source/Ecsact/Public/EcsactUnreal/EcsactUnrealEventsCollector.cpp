@@ -1,5 +1,5 @@
-#include "EcsactUnrealEventsCollector.h"
-#include "Ecsact.h"
+#include "EcsactUnreal/EcsactUnrealEventsCollector.h"
+#include "EcsactUnreal/Ecsact.h"
 
 UEcsactUnrealEventsCollector::UEcsactUnrealEventsCollector() : evc{} {
 	evc.init_callback_user_data = this;

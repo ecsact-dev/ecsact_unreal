@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Tickable.h"
 #include "UObject/NoExportTypes.h"
-#include "EcsactRunner.h"
+#include "EcsactUnreal/EcsactRunner.h"
 #include "ecsact/runtime/common.h"
 #include "EcsactSyncRunner.generated.h"
 
