@@ -67,6 +67,10 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 auto FEcsactModule::UnloadEcsactRuntime() -> void {
 	UE_LOG(Ecsact, Log, TEXT("Unloading ecsact runtime"));
 
+	if(ecsact_async_disconnect != nullptr) {
+		ecsact_async_disconnect();
+	}
+
 	StopRunner();
 
 #define RESET_ECSACT_FN(fn, UNUSED_PARAM) fn = nullptr
