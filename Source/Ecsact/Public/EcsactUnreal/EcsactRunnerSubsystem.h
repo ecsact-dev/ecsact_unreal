@@ -20,4 +20,18 @@ public:
 	virtual auto RunnerStop_Implementation( //
 		class UEcsactRunner* Runner
 	) -> void;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
+	void EntityCreated(int32 Entity);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
+	void EntityDestroyed(int32 Entity);
+
+	virtual auto EntityCreated_Implementation( //
+		int32 Entity
+	) -> void;
+
+	virtual auto EntityDestroyed_Implementation( //
+		int32 Entity
+	) -> void;
 };

@@ -279,9 +279,8 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
 				auto comp_ustruct_name = ecsact_ustruct_name(comp_id);
 				ctx.write(std::format(
-					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", meta "
-					"= "
-					"(DisplayName = \"Init {}\"))\n",
+					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"meta = (DisplayName = \"Init {}\"))\n",
 					comp_full_name
 				));
 				ctx.write(std::format(
@@ -291,6 +290,38 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				));
 				ctx.write(std::format(
 					"virtual void Init{0}_Implementation(int32 Entity, {1} {0});\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				));
+
+				ctx.write(std::format(
+					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"meta = (DisplayName = \"Update {}\"))\n",
+					comp_full_name
+				));
+				ctx.write(std::format(
+					"void Update{0}(int32 Entity, {1} {0});\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				));
+				ctx.write(std::format(
+					"virtual void Update{0}_Implementation(int32 Entity, {1} {0});\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				));
+
+				ctx.write(std::format(
+					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"meta = (DisplayName = \"Remove {}\"))\n",
+					comp_full_name
+				));
+				ctx.write(std::format(
+					"void Remove{0}(int32 Entity, {1} {0});\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				));
+				ctx.write(std::format(
+					"virtual void Remove{0}_Implementation(int32 Entity, {1} {0});\n",
 					comp_pascal_name,
 					comp_ustruct_name
 				));
@@ -316,6 +347,36 @@ static auto generate_source(ecsact::codegen_plugin_context ctx) -> void {
 			ctx,
 			std::format(
 				"void U{0}EcsactRunnerSubsystem::Init{1}_Implementation"
+				"(int32 Entity, {2} {1})",
+				package_pascal_name,
+				comp_pascal_name,
+				comp_ustruct_name
+			),
+			[&] {
+
+			}
+		);
+		ctx.writef("\n\n");
+
+		block(
+			ctx,
+			std::format(
+				"void U{0}EcsactRunnerSubsystem::Update{1}_Implementation"
+				"(int32 Entity, {2} {1})",
+				package_pascal_name,
+				comp_pascal_name,
+				comp_ustruct_name
+			),
+			[&] {
+
+			}
+		);
+		ctx.writef("\n\n");
+
+		block(
+			ctx,
+			std::format(
+				"void U{0}EcsactRunnerSubsystem::Remove{1}_Implementation"
 				"(int32 Entity, {2} {1})",
 				package_pascal_name,
 				comp_pascal_name,
