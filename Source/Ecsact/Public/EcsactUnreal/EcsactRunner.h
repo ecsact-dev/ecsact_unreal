@@ -12,18 +12,58 @@ class UEcsactRunner : public UObject, public FTickableGameObject {
 	GENERATED_BODY() // NOLINT
 
 	TArray<class UEcsactRunnerSubsystem*> RunnerSubsystems;
+	ecsact_execution_events_collector     EventsCollector;
+
+	static auto OnInitComponentRaw(
+		ecsact_event        event,
+		ecsact_entity_id    entity_id,
+		ecsact_component_id component_id,
+		const void*         component_data,
+		void*               callback_user_data
+	) -> void;
+
+	static auto OnUpdateComponentRaw(
+		ecsact_event        event,
+		ecsact_entity_id    entity_id,
+		ecsact_component_id component_id,
+		const void*         component_data,
+		void*               callback_user_data
+	) -> void;
+
+	static auto OnRemoveComponentRaw(
+		ecsact_event        event,
+		ecsact_entity_id    entity_id,
+		ecsact_component_id component_id,
+		const void*         component_data,
+		void*               callback_user_data
+	) -> void;
+
+	static auto OnEntityCreatedRaw(
+		ecsact_event                 event,
+		ecsact_entity_id             entity_id,
+		ecsact_placeholder_entity_id placeholder_entity_id,
+		void*                        callback_user_data
+	) -> void;
+
+	static auto OnEntityDestroyedRaw(
+		ecsact_event                 event,
+		ecsact_entity_id             entity_id,
+		ecsact_placeholder_entity_id placeholder_entity_id,
+		void*                        callback_user_data
+	) -> void;
 
 protected:
 	UPROPERTY()
-	class UEcsactUnrealEventsCollector* EventsCollector;
-
-	UPROPERTY()
 	class UEcsactUnrealExecutionOptions* ExecutionOptions;
+
+	auto GetEventsCollector() -> ecsact_execution_events_collector*;
 
 	virtual auto InitRunnerSubsystems() -> void;
 	virtual auto ShutdownRunnerSubsystems() -> void;
 
 public:
+	UEcsactRunner();
+
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
 	auto IsTickable() const -> bool override;

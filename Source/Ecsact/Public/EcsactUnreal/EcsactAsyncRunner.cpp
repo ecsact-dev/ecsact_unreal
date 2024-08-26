@@ -71,10 +71,7 @@ auto UEcsactAsyncRunner::Tick(float DeltaTime) -> void {
 		UE_LOG(Ecsact, Error, TEXT("ecsact_async_flush_events is unavailable"));
 	} else {
 		ecsact_execution_events_collector* evc_c = nullptr;
-		if(EventsCollector != nullptr) {
-			evc_c = EventsCollector->GetCEVC();
-		}
-		ecsact_async_flush_events(evc_c, &async_evc);
+		ecsact_async_flush_events(GetEventsCollector(), &async_evc);
 	}
 }
 

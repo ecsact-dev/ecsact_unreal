@@ -7,6 +7,26 @@ UCLASS(Blueprintable)
 
 class ECSACT_API UEcsactRunnerSubsystem : public UObject {
 	GENERATED_BODY() // NOLINT
+
+	friend class UEcsactRunner;
+
+protected:
+	virtual void InitComponentRaw(
+		ecsact_entity_id    EntityId,
+		ecsact_component_id ComponentId,
+		const void*         ComponentData
+	);
+	virtual void UpdateComponentRaw(
+		ecsact_entity_id    EntityId,
+		ecsact_component_id ComponentId,
+		const void*         ComponentData
+	);
+	virtual void RemoveComponentRaw(
+		ecsact_entity_id    EntityId,
+		ecsact_component_id ComponentId,
+		const void*         ComponentData
+	);
+
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void RunnerStart(class UEcsactRunner* Runner);
