@@ -98,6 +98,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 
 	inc_header(ctx, "CoreMinimal.h");
 	inc_header(ctx, "UObject/Interface.h");
+	inc_header(ctx, "EcsactUnreal/EcsactRunnerSubsystem.h");
 	inc_package_header(ctx, ctx.package_id, ".hh");
 	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.generated.h");
 
@@ -106,44 +107,71 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 
 	ctx.writef("\n\n");
 
-	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
-		auto comp_name = ecsact::meta::component_name(comp_id);
-		ctx.write(
-			"UINTERFACE(MinimalAPI, Blueprintable, meta = (DisplayName = \"",
-			std::format(
-				"requires {} (ecsact)",
-				ecsact::meta::decl_full_name(comp_id)
-			),
-			"\"))\n"
-		);
-		block(
-			ctx,
-			std::format(
-				"class UEcsactRequires{}{} : public UInterface",
-				prefix,
-				comp_name
-			),
-			[&] { ctx.writef("GENERATED_BODY() // NOLINT"); }
-		);
-		ctx.writef(";\n");
+	ctx.write(std::format(
+		"UCLASS(Blueprintable, meta = "
+		"(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
+		ecsact::meta::package_name(ctx.package_id)
+	));
+	block(
+		ctx,
+		std::format(
+			"class U{}EcsactRunnerSubsystem : public UEcsactRunnerSubsystem",
+			prefix
+		),
+		[&] {
+			ctx.writef("GENERATED_BODY() // NOLINT\n");
+			ctx.indentation -= 1;
+			ctx.writef("\n");
+			ctx.writef("public:");
+			ctx.indentation += 1;
+			ctx.writef("\n");
 
-		block(
-			ctx,
-			std::format("class IEcsactRequires{}{}", prefix, comp_name),
-			[&] {
-				ctx.writef("GENERATED_BODY() // NOLINT\n");
-				ctx.indentation -= 1;
-				ctx.writef("\n");
-				ctx.writef("public:");
-				ctx.indentation += 1;
-				ctx.writef("\n");
+			for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+				auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+				auto comp_type_cpp_name = cpp_identifier(comp_full_name);
+				auto comp_name = ecsact::meta::component_name(comp_id);
+				auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
+				ctx.write(std::format(
+					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", meta "
+					"= "
+					"(DisplayName = \"Init {}\"))\n",
+					comp_full_name
+				));
+				ctx.write(std::format("void Init{}();\n", comp_pascal_name));
+				ctx.write(std::format(
+					"virtual void Init{}_Implementation();\n",
+					comp_pascal_name
+				));
 			}
-		);
-		ctx.writef(";\n");
-	}
+		}
+	);
+	ctx.writef(";\n");
 }
 
 static auto generate_source(ecsact::codegen_plugin_context ctx) -> void {
+	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.h");
+
+	auto package_pascal_name =
+		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
+
+	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+		auto comp_name = ecsact::meta::component_name(comp_id);
+		auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
+
+		block(
+			ctx,
+			std::format(
+				"void U{}EcsactRunnerSubsystem::Init{}_Implementation()",
+				package_pascal_name,
+				comp_pascal_name
+			),
+			[&] {
+
+			}
+		);
+		ctx.writef("\n\n");
+	}
 }
 
 auto ecsact_codegen_plugin(

@@ -11,12 +11,17 @@ UCLASS(Abstract)
 class UEcsactRunner : public UObject, public FTickableGameObject {
 	GENERATED_BODY() // NOLINT
 
+	TArray<class UEcsactRunnerSubsystem*> RunnerSubsystems;
+
 protected:
 	UPROPERTY()
 	class UEcsactUnrealEventsCollector* EventsCollector;
 
 	UPROPERTY()
 	class UEcsactUnrealExecutionOptions* ExecutionOptions;
+
+	virtual auto InitRunnerSubsystems() -> void;
+	virtual auto ShutdownRunnerSubsystems() -> void;
 
 public:
 	auto Tick(float DeltaTime) -> void override;
