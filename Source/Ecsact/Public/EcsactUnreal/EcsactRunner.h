@@ -13,6 +13,7 @@ class UEcsactRunner : public UObject, public FTickableGameObject {
 
 	TArray<class UEcsactRunnerSubsystem*> RunnerSubsystems;
 	ecsact_execution_events_collector     EventsCollector;
+	bool                                  bIsStopped = false;
 
 	static auto OnInitComponentRaw(
 		ecsact_event        event,
@@ -63,6 +64,10 @@ protected:
 
 public:
 	UEcsactRunner();
+
+	virtual auto Start() -> void;
+	virtual auto Stop() -> void;
+	virtual auto IsStopped() const -> bool;
 
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;

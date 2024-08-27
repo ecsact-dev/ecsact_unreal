@@ -1,5 +1,7 @@
+#include "UObject/UObjectIterator.h"
 #include "EcsactUnreal/EcsactRunner.h"
 #include "EcsactUnreal/EcsactRunnerSubsystem.h"
+#include "EcsactUnreal/Ecsact.h"
 #include "ecsact/runtime/common.h"
 
 UEcsactRunner::UEcsactRunner() : EventsCollector{} {
@@ -14,6 +16,20 @@ UEcsactRunner::UEcsactRunner() : EventsCollector{} {
 	EventsCollector.remove_callback = ThisClass::OnRemoveComponentRaw;
 	EventsCollector.entity_created_callback = ThisClass::OnEntityCreatedRaw;
 	EventsCollector.entity_destroyed_callback = ThisClass::OnEntityDestroyedRaw;
+}
+
+auto UEcsactRunner::Start() -> void {
+	bIsStopped = false;
+	InitRunnerSubsystems();
+}
+
+auto UEcsactRunner::Stop() -> void {
+	ShutdownRunnerSubsystems();
+	bIsStopped = true;
+}
+
+auto UEcsactRunner::IsStopped() const -> bool {
+	return bIsStopped;
 }
 
 auto UEcsactRunner::Tick(float DeltaTime) -> void {
@@ -31,9 +47,36 @@ auto UEcsactRunner::IsTickable() const -> bool {
 }
 
 auto UEcsactRunner::InitRunnerSubsystems() -> void {
+	auto subsystem_types = TArray<UClass*>{};
+	for(auto it = TObjectIterator<UClass>{}; it; ++it) {
+		auto uclass = *it;
+
+		if(!uclass->IsChildOf(UEcsactRunnerSubsystem::StaticClass())) {
+			continue;
+		}
+
+		subsystem_types.Add(uclass);
+	}
+
+	check(RunnerSubsystems.IsEmpty());
+	RunnerSubsystems.Empty();
+
+	for(auto t : subsystem_types) {
+		UE_LOG(Ecsact, Log, TEXT("Starting ecsact subsystem %s"), *t->GetName());
+		RunnerSubsystems.Add(NewObject<UEcsactRunnerSubsystem>(this, t));
+	}
+
+	for(auto subsystem : RunnerSubsystems) {
+		subsystem->RunnerStart(this);
+	}
 }
 
 auto UEcsactRunner::ShutdownRunnerSubsystems() -> void {
+	for(auto subsystem : RunnerSubsystems) {
+		subsystem->RunnerStop(this);
+	}
+
+	RunnerSubsystems.Empty();
 }
 
 auto UEcsactRunner::GetEventsCollector() -> ecsact_execution_events_collector* {

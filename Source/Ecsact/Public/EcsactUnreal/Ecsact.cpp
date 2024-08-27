@@ -153,11 +153,13 @@ auto FEcsactModule::StartRunner() -> void {
 			*Runner->GetClass()->GetName()
 		);
 		Runner->AddToRoot();
+		Runner->Start();
 	}
 }
 
 auto FEcsactModule::StopRunner() -> void {
 	if(Runner != nullptr) {
+		Runner->Stop();
 		Runner->RemoveFromRoot();
 		Runner = nullptr;
 	}
