@@ -3,7 +3,7 @@
 #include "ecsact/runtime/common.h"
 #include "EcsactRunnerSubsystem.generated.h"
 
-UCLASS(Blueprintable)
+UCLASS(Abstract, Blueprintable)
 
 class ECSACT_API UEcsactRunnerSubsystem : public UObject {
 	GENERATED_BODY() // NOLINT

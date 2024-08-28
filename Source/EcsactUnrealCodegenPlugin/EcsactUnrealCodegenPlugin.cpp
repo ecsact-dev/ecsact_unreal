@@ -259,7 +259,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	}
 
 	ctx.write(std::format(
-		"UCLASS(Blueprintable, meta = "
+		"UCLASS(Abstract, Blueprintable, meta = "
 		"(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
 		ecsact::meta::package_name(ctx.package_id)
 	));

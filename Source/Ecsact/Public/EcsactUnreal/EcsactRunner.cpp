@@ -1,5 +1,6 @@
-#include "UObject/UObjectIterator.h"
 #include "EcsactUnreal/EcsactRunner.h"
+#include "UObject/ObjectMacros.h"
+#include "UObject/UObjectIterator.h"
 #include "EcsactUnreal/EcsactRunnerSubsystem.h"
 #include "EcsactUnreal/Ecsact.h"
 #include "ecsact/runtime/common.h"
@@ -55,6 +56,10 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 			continue;
 		}
 
+		if(uclass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated)) {
+			continue;
+		}
+
 		subsystem_types.Add(uclass);
 	}
 
@@ -63,7 +68,9 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 
 	for(auto t : subsystem_types) {
 		UE_LOG(Ecsact, Log, TEXT("Starting ecsact subsystem %s"), *t->GetName());
-		RunnerSubsystems.Add(NewObject<UEcsactRunnerSubsystem>(this, t));
+		auto subsystem = NewObject<UEcsactRunnerSubsystem>(this, t);
+		subsystem->AddToRoot();
+		RunnerSubsystems.Add(subsystem);
 	}
 
 	for(auto subsystem : RunnerSubsystems) {
@@ -73,6 +80,9 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 
 auto UEcsactRunner::ShutdownRunnerSubsystems() -> void {
 	for(auto subsystem : RunnerSubsystems) {
+		if(subsystem == nullptr) {
+			continue;
+		}
 		subsystem->RunnerStop(this);
 	}
 

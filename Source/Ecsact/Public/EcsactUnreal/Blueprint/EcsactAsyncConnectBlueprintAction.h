@@ -8,6 +8,8 @@
 UENUM()
 enum class EAsyncConnectError : uint8 {
 	NoError,
+	AsyncRunnerEventsUnavailable,
+	InvalidRequestId,
 	PermissionDenied,
 	InvalidConnectionString,
 };

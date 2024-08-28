@@ -90,7 +90,7 @@ auto FEcsactModule::StartupModule() -> void {
 	}
 #if WITH_EDITOR
 	FEditorDelegates::PreBeginPIE.AddRaw(this, &FEcsactModule::OnPreBeginPIE);
-	FEditorDelegates::EndPIE.AddRaw(this, &FEcsactModule::OnEndPIE);
+	FEditorDelegates::EndPIE.AddRaw(this, &FEcsactModule::OnPrePIEEnded);
 #endif
 }
 
@@ -110,7 +110,7 @@ auto FEcsactModule::OnPreBeginPIE(bool _) -> void {
 	LoadEcsactRuntime();
 }
 
-auto FEcsactModule::OnEndPIE(bool _) -> void {
+auto FEcsactModule::OnPrePIEEnded(bool _) -> void {
 	UnloadEcsactRuntime();
 }
 

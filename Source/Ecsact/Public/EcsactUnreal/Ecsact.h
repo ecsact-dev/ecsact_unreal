@@ -16,7 +16,7 @@ class FEcsactModule : public IModuleInterface {
 	auto UnloadEcsactRuntime() -> void;
 	auto Abort() -> void;
 	auto OnPreBeginPIE(bool bIsSimulating) -> void;
-	auto OnEndPIE(const bool bIsSimulating) -> void;
+	auto OnPrePIEEnded(const bool bIsSimulating) -> void;
 
 	auto StartRunner() -> void;
 	auto StopRunner() -> void;

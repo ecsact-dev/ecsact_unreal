@@ -23,10 +23,18 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 			TEXT("Cannot use Ecsact async blueprint api with runner that does not "
 					 "implement IEcsactAsyncRunnerEvents")
 		);
+		OnError.Broadcast(EAsyncConnectError::AsyncRunnerEventsUnavailable);
+		OnDone.Broadcast({});
 		return;
 	}
 
 	auto req_id = ecsact_async_connect(Utf8ConnectionString.c_str());
+
+	if(req_id == ECSACT_INVALID_ID(async_request)) {
+		OnError.Broadcast(EAsyncConnectError::InvalidRequestId);
+		OnDone.Broadcast({});
+		return;
+	}
 
 	async_events->OnRequestDone(
 		req_id,
