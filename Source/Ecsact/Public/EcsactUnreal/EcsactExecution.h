@@ -1,5 +1,7 @@
 #pragma once
 
+#include "UObject/WeakObjectPtrTemplates.h"
+
 class EcsactUnrealExecution {
 	friend class UEcsactSyncRunner;
 	friend class UEcsactAsyncRunner;
@@ -18,5 +20,5 @@ public:
 	/**
 	 *
 	 */
-	static auto Runner() -> class UEcsactRunner*;
+	static auto Runner() -> TWeakObjectPtr<class UEcsactRunner>;
 };

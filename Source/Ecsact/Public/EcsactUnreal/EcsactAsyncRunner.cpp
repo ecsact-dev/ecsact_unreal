@@ -7,6 +7,12 @@
 #include "ecsact/runtime/common.h"
 
 UEcsactAsyncRunner::UEcsactAsyncRunner() {
+	UE_LOG(
+		Ecsact,
+		Warning,
+		TEXT("UEcsactAsyncRunner CONSTRUCTOR %i"),
+		(intptr_t)this
+	);
 	async_evc.async_error_callback = ThisClass::OnAsyncErrorRaw;
 	async_evc.system_error_callback = ThisClass::OnExecuteSysErrorRaw;
 	async_evc.async_request_done_callback = ThisClass::OnAsyncRequestDoneRaw;
@@ -28,10 +34,27 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 
 	for(auto req_id : request_ids) {
 		auto cbs = self->RequestErrorCallbacks.Find(req_id);
-		if(cbs) {
+
+		UE_LOG(Ecsact, Warning, TEXT("async request error id=%i"), req_id);
+
+		if(cbs && !cbs->IsEmpty()) {
 			for(auto& cb : *cbs) {
-				cb.ExecuteIfBound(async_err);
+				if(!cb.ExecuteIfBound(async_err)) {
+					UE_LOG(
+						Ecsact,
+						Warning,
+						TEXT("Unbound async error callback for request %i"),
+						req_id
+					);
+				}
 			}
+		} else {
+			UE_LOG(
+				Ecsact,
+				Warning,
+				TEXT("No async error callbacks for request %i"),
+				req_id
+			);
 		}
 	}
 }
@@ -54,17 +77,40 @@ auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
 
 	for(auto req_id : request_ids) {
 		auto cbs = self->RequestDoneCallbacks.Find(req_id);
-		if(cbs) {
+
+		UE_LOG(Ecsact, Warning, TEXT("async request done id=%i"), req_id);
+
+		if(cbs && !cbs->IsEmpty()) {
 			for(auto& cb : *cbs) {
-				cb.ExecuteIfBound();
+				if(!cb.ExecuteIfBound()) {
+					UE_LOG(
+						Ecsact,
+						Warning,
+						TEXT("Unbound async done callback for request %i (self=%i)"),
+						req_id,
+						(intptr_t)self
+					);
+				}
 			}
 
 			cbs->Empty();
+		} else {
+			UE_LOG(
+				Ecsact,
+				Warning,
+				TEXT("No async done callbacks for request %i (self=%i)"),
+				req_id,
+				(intptr_t)self
+			);
 		}
 	}
 }
 
 auto UEcsactAsyncRunner::Tick(float DeltaTime) -> void {
+	if(IsStopped()) {
+		return;
+	}
+
 	EnqueueExecutionOptions();
 
 	if(ecsact_async_flush_events == nullptr) {
@@ -105,6 +151,13 @@ auto UEcsactAsyncRunner::OnRequestDone(
 	FAsyncRequestDoneCallback Callback
 ) -> void {
 	check(RequestId != ECSACT_INVALID_ID(async_request));
+	UE_LOG(
+		Ecsact,
+		Error,
+		TEXT("Adding on request done callback (req_id=%i self=%i)"),
+		RequestId,
+		(intptr_t)this
+	);
 
 	RequestDoneCallbacks.FindOrAdd(RequestId).Add(Callback);
 }
@@ -114,6 +167,13 @@ auto UEcsactAsyncRunner::OnRequestError(
 	FAsyncRequestErrorCallback Callback
 ) -> void {
 	check(RequestId != ECSACT_INVALID_ID(async_request));
+	UE_LOG(
+		Ecsact,
+		Error,
+		TEXT("Adding on request error callback (req_id=%i self=%i)"),
+		RequestId,
+		(intptr_t)this
+	);
 
 	RequestErrorCallbacks.FindOrAdd(RequestId).Add(Callback);
 }

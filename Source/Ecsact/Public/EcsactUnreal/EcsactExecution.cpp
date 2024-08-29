@@ -7,6 +7,6 @@ auto EcsactUnrealExecution::DeltaTime() -> float {
 	return DeltaTime_;
 }
 
-auto EcsactUnrealExecution::Runner() -> class UEcsactRunner* {
+auto EcsactUnrealExecution::Runner() -> TWeakObjectPtr<class UEcsactRunner> {
 	return FEcsactModule::Get().Runner;
 }

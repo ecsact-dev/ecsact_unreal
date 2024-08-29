@@ -2,15 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "UObject/WeakObjectPtr.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(Ecsact, Log, All);
 
 class FEcsactModule : public IModuleInterface {
 	friend class EcsactUnrealExecution;
 
-	static FEcsactModule* Self;
-	void*                 EcsactRuntimeHandle;
-	class UEcsactRunner*  Runner;
+	static FEcsactModule*               Self;
+	void*                               EcsactRuntimeHandle;
+	TWeakObjectPtr<class UEcsactRunner> Runner;
 
 	auto LoadEcsactRuntime() -> void;
 	auto UnloadEcsactRuntime() -> void;

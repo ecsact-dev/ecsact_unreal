@@ -29,8 +29,10 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 	}
 
 	auto req_id = ecsact_async_connect(Utf8ConnectionString.c_str());
+	UE_LOG(Ecsact, Warning, TEXT("async connect request id=%i"), req_id);
 
 	if(req_id == ECSACT_INVALID_ID(async_request)) {
+		UE_LOG(Ecsact, Error, TEXT("Invalid Request ID"));
 		OnError.Broadcast(EAsyncConnectError::InvalidRequestId);
 		OnDone.Broadcast({});
 		return;
@@ -54,6 +56,7 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {
+	UE_LOG(Ecsact, Error, TEXT("OnRequestDone??"));
 	if(!bConnectFailed) {
 		OnSuccess.Broadcast({});
 	}
@@ -63,12 +66,13 @@ auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {
 auto UEcsactAsyncConnectBlueprintAction::OnRequestError( //
 	ecsact_async_error Error
 ) -> void {
+	UE_LOG(Ecsact, Error, TEXT("OnRequestError??"));
 	switch(Error) {
 		case ECSACT_ASYNC_ERR_PERMISSION_DENIED:
 			OnError.Broadcast(EAsyncConnectError::PermissionDenied);
 			break;
 		case ECSACT_ASYNC_INVALID_CONNECTION_STRING:
-			OnError.Broadcast(EAsyncConnectError::PermissionDenied);
+			OnError.Broadcast(EAsyncConnectError::InvalidConnectionString);
 			break;
 	}
 

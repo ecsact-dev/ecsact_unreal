@@ -44,7 +44,7 @@ auto UEcsactRunner::GetStatId() const -> TStatId {
 }
 
 auto UEcsactRunner::IsTickable() const -> bool {
-	return !IsTemplate();
+	return !IsTemplate() && !bIsStopped;
 }
 
 auto UEcsactRunner::InitRunnerSubsystems() -> void {
