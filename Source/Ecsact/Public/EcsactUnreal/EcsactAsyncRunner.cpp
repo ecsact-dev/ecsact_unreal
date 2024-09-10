@@ -7,12 +7,6 @@
 #include "ecsact/runtime/common.h"
 
 UEcsactAsyncRunner::UEcsactAsyncRunner() {
-	UE_LOG(
-		Ecsact,
-		Warning,
-		TEXT("UEcsactAsyncRunner CONSTRUCTOR %i"),
-		(intptr_t)this
-	);
 	async_evc.async_error_callback = ThisClass::OnAsyncErrorRaw;
 	async_evc.system_error_callback = ThisClass::OnExecuteSysErrorRaw;
 	async_evc.async_request_done_callback = ThisClass::OnAsyncRequestDoneRaw;
@@ -134,7 +128,14 @@ auto UEcsactAsyncRunner::EnqueueExecutionOptions() -> void {
 	}
 
 	if(ExecutionOptions->IsNotEmpty()) {
-		ecsact_async_enqueue_execution_options(*ExecutionOptions->GetCPtr());
+		auto req_id =
+			ecsact_async_enqueue_execution_options(*ExecutionOptions->GetCPtr());
+		UE_LOG(
+			Ecsact,
+			Warning,
+			TEXT("Actually enqueueing some options! (req_id=%i)"),
+			(int)req_id
+		);
 		ExecutionOptions->Clear();
 	}
 }

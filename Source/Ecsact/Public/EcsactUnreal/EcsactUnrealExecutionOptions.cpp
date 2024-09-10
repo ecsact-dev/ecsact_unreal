@@ -1,4 +1,7 @@
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "ecsact/runtime/common.h"
+
+using CreateEntityBuilder = UEcsactUnrealExecutionOptions::CreateEntityBuilder;
 
 UEcsactUnrealExecutionOptions::UEcsactUnrealExecutionOptions() : ExecOpts({}) {
 }
@@ -12,7 +15,8 @@ auto UEcsactUnrealExecutionOptions::IsNotEmpty() const -> bool {
 		ExecOpts.add_components_length > 0 ||
 		ExecOpts.destroy_entities_length > 0 ||
 		ExecOpts.update_components_length > 0 ||
-		ExecOpts.remove_components_length > 0;
+		ExecOpts.remove_components_length > 0 ||
+		ExecOpts.create_entities_length > 0;
 }
 
 auto UEcsactUnrealExecutionOptions::Clear() -> void {
@@ -29,5 +33,70 @@ auto UEcsactUnrealExecutionOptions::Clear() -> void {
 	AddComponentList.Empty();
 	UpdateComponentList.Empty();
 	RemoveComponentList.Empty();
+	DestroyEntityList.Empty();
+	CreateEntityList.Empty();
+	CreateEntityComponentsList.Empty();
+	CreateEntityComponentsListData.Empty();
+	CreateEntityComponentsListNums.Empty();
 	ExecOpts = {};
+}
+
+auto UEcsactUnrealExecutionOptions::CreateEntity(
+	ecsact_placeholder_entity_id PlaceholderId
+) -> CreateEntityBuilder {
+	return {this, PlaceholderId};
+}
+
+CreateEntityBuilder::CreateEntityBuilder(
+	UEcsactUnrealExecutionOptions* Owner,
+	ecsact_placeholder_entity_id   PlacerholderId
+)
+	: bValid(true), Owner(Owner), PlaceholderId(PlaceholderId) {
+}
+
+CreateEntityBuilder::CreateEntityBuilder(CreateEntityBuilder&& Other) {
+	bValid = Other.bValid;
+	Owner = Other.Owner;
+	ComponentList = std::move(Other.ComponentList);
+
+	Other.bValid = false;
+	Other.Owner = nullptr;
+	Other.ComponentList = {};
+}
+
+CreateEntityBuilder::~CreateEntityBuilder() {
+	if(bValid && Owner) {
+		Finish();
+	}
+}
+
+auto CreateEntityBuilder::Finish() -> void {
+	if(!bValid || !Owner) {
+		return;
+	}
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("CreateEntityBuilder::Finish() after valid check")
+	);
+
+	Owner->CreateEntityList.Add(PlaceholderId);
+	Owner->CreateEntityComponentsListNums.Add(ComponentList.Num());
+	Owner->CreateEntityComponentsList.Push(std::move(ComponentList));
+	Owner->CreateEntityComponentsListData.Empty();
+	for(auto& list : Owner->CreateEntityComponentsList) {
+		Owner->CreateEntityComponentsListData.Add(list.GetData());
+	}
+
+	Owner->ExecOpts.create_entities_length = Owner->CreateEntityList.Num();
+	Owner->ExecOpts.create_entities = Owner->CreateEntityList.GetData();
+	Owner->ExecOpts.create_entities_components_length =
+		Owner->CreateEntityComponentsListNums.GetData();
+	Owner->ExecOpts.create_entities_components =
+		Owner->CreateEntityComponentsListData.GetData();
+
+	bValid = false;
+	Owner = nullptr;
+	ComponentList = {};
 }

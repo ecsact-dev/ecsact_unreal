@@ -1,4 +1,5 @@
 #include "EcsactUnreal/EcsactRunner.h"
+#include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/UObjectIterator.h"
 #include "EcsactUnreal/EcsactRunnerSubsystem.h"
@@ -6,6 +7,10 @@
 #include "ecsact/runtime/common.h"
 
 UEcsactRunner::UEcsactRunner() : EventsCollector{} {
+	ExecutionOptions = CreateDefaultSubobject<UEcsactUnrealExecutionOptions>( //
+		TEXT("ExecutionOptions")
+	);
+
 	EventsCollector.init_callback_user_data = this;
 	EventsCollector.update_callback_user_data = this;
 	EventsCollector.remove_callback_user_data = this;
@@ -45,6 +50,18 @@ auto UEcsactRunner::GetStatId() const -> TStatId {
 
 auto UEcsactRunner::IsTickable() const -> bool {
 	return !IsTemplate() && !bIsStopped;
+}
+
+auto UEcsactRunner::CreateEntity() -> EcsactRunnerCreateEntityBuilder {
+	return {this, GeneratePlaceholderId()};
+}
+
+auto UEcsactRunner::GeneratePlaceholderId() -> ecsact_placeholder_entity_id {
+	static ecsact_placeholder_entity_id LastPlaceholderId = {};
+	using ref_t = std::add_lvalue_reference_t<
+		std::underlying_type_t<decltype(LastPlaceholderId)>>;
+	reinterpret_cast<ref_t>(LastPlaceholderId) += 1;
+	return LastPlaceholderId;
 }
 
 auto UEcsactRunner::InitRunnerSubsystems() -> void {
@@ -139,6 +156,14 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 	void*                        callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+
+	auto create_callback =
+		self->CreateEntityCallbacks.Find(placeholder_entity_id);
+	if(create_callback) {
+		create_callback->Execute(entity_id);
+		self->CreateEntityCallbacks.Remove(placeholder_entity_id);
+	}
+
 	for(auto subsystem : self->RunnerSubsystems) {
 		subsystem->EntityCreated(static_cast<int32>(entity_id));
 	}
@@ -154,4 +179,30 @@ auto UEcsactRunner::OnEntityDestroyedRaw(
 	for(auto subsystem : self->RunnerSubsystems) {
 		subsystem->EntityDestroyed(static_cast<int32>(entity_id));
 	}
+}
+
+UEcsactRunner::EcsactRunnerCreateEntityBuilder::EcsactRunnerCreateEntityBuilder(
+	UEcsactRunner*               Owner,
+	ecsact_placeholder_entity_id PlaceholderId
+)
+	: Owner{Owner}
+	, PlaceholderId{PlaceholderId}
+	, Builder{Owner->ExecutionOptions->CreateEntity(PlaceholderId)} {
+}
+
+UEcsactRunner::EcsactRunnerCreateEntityBuilder::
+	EcsactRunnerCreateEntityBuilder(EcsactRunnerCreateEntityBuilder&&) = default;
+
+UEcsactRunner::EcsactRunnerCreateEntityBuilder::
+	~EcsactRunnerCreateEntityBuilder() = default;
+
+auto UEcsactRunner::EcsactRunnerCreateEntityBuilder::Finish() -> void {
+	Builder.Finish();
+}
+
+auto UEcsactRunner::EcsactRunnerCreateEntityBuilder::OnCreate(
+	TDelegate<void(ecsact_entity_id)> Callback
+) && -> EcsactRunnerCreateEntityBuilder {
+	Owner->CreateEntityCallbacks.Add(PlaceholderId, Callback);
+	return std::move(*this);
 }
