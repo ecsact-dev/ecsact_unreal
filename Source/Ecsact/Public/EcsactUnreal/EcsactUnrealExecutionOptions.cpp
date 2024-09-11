@@ -75,12 +75,6 @@ auto CreateEntityBuilder::Finish() -> void {
 		return;
 	}
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("CreateEntityBuilder::Finish() after valid check")
-	);
-
 	Owner->CreateEntityList.Add(PlaceholderId);
 	Owner->CreateEntityComponentsListNums.Add(ComponentList.Num());
 	Owner->CreateEntityComponentsList.Push(std::move(ComponentList));
