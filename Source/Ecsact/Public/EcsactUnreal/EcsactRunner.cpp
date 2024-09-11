@@ -73,7 +73,11 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 			continue;
 		}
 
-		if(uclass->HasAnyClassFlags(CLASS_Abstract | CLASS_Deprecated)) {
+		if(uclass->HasAnyClassFlags(CLASS_Abstract)) {
+			continue;
+		}
+
+		if(uclass->HasAnyFlags(RF_Transient)) {
 			continue;
 		}
 
