@@ -23,17 +23,13 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 		registry_id = ecsact_create_registry("Default Registry");
 	}
 
-	ecsact_execution_events_collector* evc_c = nullptr;
-	if(EventsCollector != nullptr) {
-		evc_c = EventsCollector->GetCEVC();
-	}
-
 	ecsact_execution_options* exec_opts = nullptr;
 	if(ExecutionOptions != nullptr && ExecutionOptions->IsNotEmpty()) {
 		exec_opts = ExecutionOptions->GetCPtr();
 	}
 
-	auto err = ecsact_execute_systems(registry_id, 1, exec_opts, evc_c);
+	auto err =
+		ecsact_execute_systems(registry_id, 1, exec_opts, GetEventsCollector());
 	if(err != ECSACT_EXEC_SYS_OK) {
 		UE_LOG(Ecsact, Error, TEXT("Ecsact execution failed"));
 	}

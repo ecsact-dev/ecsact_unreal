@@ -29,7 +29,6 @@ public class Ecsact : ModuleRules {
 			"Engine",
 			"Slate",
 			"SlateCore",
-			"Kismet",
 		});
 
 		DynamicallyLoadedModuleNames.AddRange(new string[] {
@@ -80,14 +79,14 @@ public class Ecsact : ModuleRules {
 				"--plugin=cpp_systems_source"
 			};
 
-			// if(!File.Exists(EcsactUnrealCodegenPluginPath)) {
-			// 	Console.WriteLine(
-			// 		"warning: EcsactUnrealCodegenPlugin was not built. It should have "
-			// + 		"been shipped with the Ecsact Unreal integration plugin."
-			// 	);
-			// } else {
-			// 	CodegenArgs.Add($"--plugin={EcsactUnrealCodegenPluginPath}");
-			// }
+			if(!File.Exists(EcsactUnrealCodegenPluginPath)) {
+				Console.WriteLine(
+					"warning: EcsactUnrealCodegenPlugin was not built. It should have " +
+					"been shipped with the Ecsact Unreal integration plugin."
+				);
+			} else {
+				CodegenArgs.Add($"--plugin={EcsactUnrealCodegenPluginPath}");
+			}
 
 			CodegenArgs.AddRange(EcsactSources);
 			ExecEcsactCli(CodegenArgs);

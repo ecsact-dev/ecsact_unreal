@@ -7,16 +7,28 @@
 
 UCLASS()
 
-class UEcsactUnrealExecutionOptions : public UObject {
+class ECSACT_API UEcsactUnrealExecutionOptions : public UObject {
 	GENERATED_BODY() // NOLINT
 
 	TArray<ecsact_action>       ActionList;
 	TArray<ecsact_component>    AddComponentList;
 	TArray<ecsact_component>    UpdateComponentList;
 	TArray<ecsact_component_id> RemoveComponentList;
-	ecsact_execution_options    ExecOpts;
+
+	TArray<ecsact_placeholder_entity_id> CreateEntityList;
+	TArray<TArray<ecsact_component>>     CreateEntityComponentsList;
+
+	TArray<ecsact_component*> CreateEntityComponentsListData;
+	TArray<int>               CreateEntityComponentsListNums;
+
+	TArray<ecsact_entity_id> DestroyEntityList;
+
+	ecsact_execution_options ExecOpts;
 
 public:
+	class CreateEntityBuilder;
+	friend CreateEntityBuilder;
+
 	UEcsactUnrealExecutionOptions();
 
 	auto Clear() -> void;
@@ -29,6 +41,18 @@ public:
 	 * `UEcsactUnrealExecutionOptions`.
 	 */
 	auto GetCPtr() -> ecsact_execution_options*;
+
+	/**
+	 * Create an entity. You may give a placeholder ID that will later be used in
+	 * the events collector create entity event.
+	 */
+	auto CreateEntity( //
+		ecsact_placeholder_entity_id PlaceholderEntityId
+	) -> CreateEntityBuilder;
+
+	inline auto DestroyEntity(ecsact_entity_id Entity) -> void {
+		DestroyEntityList.Add(Entity);
+	}
 
 	template<typename A>
 	auto PushAction(const A& Action) -> void {
@@ -76,4 +100,38 @@ public:
 		ExecOpts.remove_components_length = RemoveComponentList.Num();
 		ExecOpts.remove_components = RemoveComponentList.GetData();
 	}
+};
+
+class ECSACT_API UEcsactUnrealExecutionOptions::CreateEntityBuilder {
+	friend class UEcsactUnrealExecutionOptions;
+	bool                           bValid;
+	UEcsactUnrealExecutionOptions* Owner;
+	ecsact_placeholder_entity_id   PlaceholderId;
+	TArray<ecsact_component>       ComponentList;
+
+	CreateEntityBuilder(
+		UEcsactUnrealExecutionOptions* Owner,
+		ecsact_placeholder_entity_id   PlacerholderId
+	);
+
+public:
+	CreateEntityBuilder(CreateEntityBuilder&&);
+	~CreateEntityBuilder();
+
+	template<typename C>
+	auto AddComponent(const C& Component) && -> CreateEntityBuilder {
+		auto component_data = FMemory::Malloc(sizeof(C));
+		FMemory::Memcpy(component_data, &Component, sizeof(C));
+		ComponentList.Push(ecsact_component{
+			.component_id = C::id,
+			.component_data = component_data,
+		});
+		return std::move(*this);
+	}
+
+	/**
+	 * This is automatically called by the destructor, but can be called manually
+	 * to 'finish' building your entity.
+	 */
+	auto Finish() -> void;
 };

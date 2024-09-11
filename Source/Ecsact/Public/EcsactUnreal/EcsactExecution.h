@@ -1,6 +1,9 @@
 #pragma once
 
-class EcsactUnrealExecution {
+#include "EcsactUnreal/Ecsact.h"
+#include "UObject/WeakObjectPtrTemplates.h"
+
+class ECSACT_API EcsactUnrealExecution {
 	friend class UEcsactSyncRunner;
 	friend class UEcsactAsyncRunner;
 	static float DeltaTime_;
@@ -18,5 +21,5 @@ public:
 	/**
 	 *
 	 */
-	static auto Runner() -> class UEcsactRunner*;
+	static auto Runner() -> TWeakObjectPtr<class UEcsactRunner>;
 };

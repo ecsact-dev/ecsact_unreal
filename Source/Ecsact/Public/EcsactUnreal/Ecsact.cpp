@@ -18,8 +18,12 @@ FOR_EACH_ECSACT_API_FN(INIT_ECSACT_API_FN, UNUSED_PARAM);
 FEcsactModule* FEcsactModule::Self = nullptr;
 
 auto FEcsactModule::Get() -> FEcsactModule& {
-	check(Self != nullptr);
-	return *Self;
+	if(GIsEditor) {
+		return FModuleManager::Get().GetModuleChecked<FEcsactModule>("Ecsact");
+	} else {
+		check(Self != nullptr);
+		return *Self;
+	}
 }
 
 auto FEcsactModule::Abort() -> void {
@@ -84,13 +88,14 @@ auto FEcsactModule::UnloadEcsactRuntime() -> void {
 }
 
 auto FEcsactModule::StartupModule() -> void {
+	UE_LOG(Ecsact, Warning, TEXT("Ecsact Startup Module"));
 	Self = this;
 	if(!GIsEditor) {
 		LoadEcsactRuntime();
 	}
 #if WITH_EDITOR
 	FEditorDelegates::PreBeginPIE.AddRaw(this, &FEcsactModule::OnPreBeginPIE);
-	FEditorDelegates::EndPIE.AddRaw(this, &FEcsactModule::OnEndPIE);
+	FEditorDelegates::EndPIE.AddRaw(this, &FEcsactModule::OnPrePIEEnded);
 #endif
 }
 
@@ -103,6 +108,7 @@ auto FEcsactModule::ShutdownModule() -> void {
 	FEditorDelegates::PreBeginPIE.RemoveAll(this);
 	FEditorDelegates::EndPIE.RemoveAll(this);
 #endif
+	UE_LOG(Ecsact, Warning, TEXT("Ecsact Shutdown Module"));
 	Self = nullptr;
 }
 
@@ -110,7 +116,7 @@ auto FEcsactModule::OnPreBeginPIE(bool _) -> void {
 	LoadEcsactRuntime();
 }
 
-auto FEcsactModule::OnEndPIE(bool _) -> void {
+auto FEcsactModule::OnPrePIEEnded(bool _) -> void {
 	UnloadEcsactRuntime();
 }
 
@@ -149,17 +155,26 @@ auto FEcsactModule::StartRunner() -> void {
 		UE_LOG(
 			Ecsact,
 			Log,
-			TEXT("Using ecsact runner: %s"),
+			TEXT("Starting ecsact runner: %s"),
 			*Runner->GetClass()->GetName()
 		);
 		Runner->AddToRoot();
+		Runner->Start();
 	}
 }
 
 auto FEcsactModule::StopRunner() -> void {
 	if(Runner != nullptr) {
+		UE_LOG(
+			Ecsact,
+			Log,
+			TEXT("Stopping ecsact runner: %s"),
+			*Runner->GetClass()->GetName()
+		);
+		Runner->Stop();
 		Runner->RemoveFromRoot();
-		Runner = nullptr;
+		Runner->MarkAsGarbage();
+		Runner.Reset();
 	}
 }
 
