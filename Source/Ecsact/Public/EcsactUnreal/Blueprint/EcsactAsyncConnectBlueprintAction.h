@@ -56,7 +56,7 @@ public:
 	FAsyncConnectDoneCallback OnDone;
 
 	/**
-	 * Async request is done and no errors occured.
+	 * Async request is done and no errors occurred.
 	 */
 	UPROPERTY(BlueprintAssignable)
 	FAsyncConnectDoneCallback OnSuccess;
