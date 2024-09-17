@@ -62,10 +62,15 @@ protected:
 
 	auto GetEventsCollector() -> ecsact_execution_events_collector*;
 
+protected:
 	virtual auto InitRunnerSubsystems() -> void;
 	virtual auto ShutdownRunnerSubsystems() -> void;
-
 	virtual auto GeneratePlaceholderId() -> ecsact_placeholder_entity_id;
+	virtual auto StreamImpl(
+		ecsact_entity_id    Entity,
+		ecsact_component_id ComponentId,
+		const void*         ComponentData
+	) -> void;
 
 public:
 	class EcsactRunnerCreateEntityBuilder;
@@ -79,6 +84,11 @@ public:
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
 	auto IsTickable() const -> bool override;
+
+	template<typename C>
+	auto Stream(ecsact_entity_id Entity, const C& StreamComponent) -> void {
+		return StreamImpl(Entity, C::id, &StreamComponent);
+	}
 
 	/**
 	 * Returns a builder for creating a new entity. This builder is 'runner aware'

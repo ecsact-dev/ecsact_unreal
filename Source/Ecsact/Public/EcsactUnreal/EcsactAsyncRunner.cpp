@@ -16,6 +16,22 @@ UEcsactAsyncRunner::UEcsactAsyncRunner() {
 	async_evc.async_request_done_callback_user_data = this;
 }
 
+auto UEcsactAsyncRunner::StreamImpl(
+	ecsact_entity_id    Entity,
+	ecsact_component_id ComponentId,
+	const void*         ComponentData
+) -> void {
+	ecsact_async_stream(Entity, ComponentId, ComponentData);
+}
+
+auto UEcsactAsyncRunner::Connect( //
+	const char*               ConnectionStr,
+	FAsyncRequestDoneCallback Callback
+) -> void {
+	auto req_id = ecsact_async_connect(ConnectionStr);
+	OnRequestDone(req_id, std::move(Callback));
+}
+
 auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 	ecsact_async_error       async_err,
 	int                      request_ids_length,

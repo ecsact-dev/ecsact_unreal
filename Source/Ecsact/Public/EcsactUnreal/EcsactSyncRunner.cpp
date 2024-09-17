@@ -5,6 +5,19 @@
 #include "EcsactUnreal/EcsactExecution.h"
 #include "ecsact/runtime/core.h"
 
+auto UEcsactSyncRunner::StreamImpl(
+	ecsact_entity_id    Entity,
+	ecsact_component_id ComponentId,
+	const void*         ComponentData
+) -> void {
+	if(registry_id == ECSACT_INVALID_ID(registry)) {
+		UE_LOG(Ecsact, Warning, TEXT("UEcsactSyncRunner register_id is unset."));
+		return;
+	}
+
+	ecsact_stream(registry_id, Entity, ComponentId, ComponentData);
+}
+
 auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 	if(ecsact_execute_systems == nullptr) {
 		UE_LOG(Ecsact, Error, TEXT("ecsact_execute_systems is unavailable"));

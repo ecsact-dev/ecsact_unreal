@@ -10,8 +10,9 @@
 
 UCLASS(NotBlueprintable)
 
-class UEcsactAsyncRunner : public UEcsactRunner,
-													 public IEcsactAsyncRunnerEvents {
+class ECSACT_API UEcsactAsyncRunner //
+	: public UEcsactRunner,
+		public IEcsactAsyncRunnerEvents {
 	GENERATED_BODY() // NOLINT
 
 	ecsact_async_events_collector async_evc;
@@ -39,6 +40,13 @@ class UEcsactAsyncRunner : public UEcsactRunner,
 		void*                    callback_user_data
 	) -> void;
 
+protected:
+	auto StreamImpl(
+		ecsact_entity_id    Entity,
+		ecsact_component_id ComponentId,
+		const void*         ComponentData
+	) -> void override;
+
 public:
 	UEcsactAsyncRunner();
 
@@ -51,6 +59,14 @@ public:
 	 * enqueue the execution options.
 	 */
 	auto EnqueueExecutionOptions() -> void;
+
+	/**
+	 * Wrapper around ecsact_async_connect
+	 */
+	auto Connect( //
+		const char*               ConnectionStr,
+		FAsyncRequestDoneCallback Callback
+	) -> void;
 
 	auto OnRequestDone(
 		ecsact_async_request_id   RequestId,
