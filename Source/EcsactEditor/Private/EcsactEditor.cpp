@@ -377,9 +377,9 @@ auto FEcsactEditorModule::RunCodegen() -> void {
 		"codegen",
 		"--format=json",
 		"--plugin=cpp_header",
-		"--plugin=systems_header",
-		"--plugin=cpp_systems_header",
-		"--plugin=cpp_systems_source",
+		// "--plugin=systems_header",
+		// "--plugin=cpp_systems_header",
+		// "--plugin=cpp_systems_source",
 	};
 
 	for(auto plugin : GetUnrealCodegenPlugins()) {
