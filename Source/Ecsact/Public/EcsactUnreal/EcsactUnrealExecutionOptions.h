@@ -34,6 +34,10 @@ public:
 	auto Clear() -> void;
 	auto IsNotEmpty() const -> bool;
 
+#ifdef WITH_EDITORONLY_DATA
+	auto DebugLog() const -> void;
+#endif
+
 	/**
 	 * Get's the C `ecsact_execution_options` pointer typically passed to
 	 * `ecsact_execute_systems` or `ecsact_async_enqueue_execution_options`. The
@@ -117,6 +121,8 @@ class ECSACT_API UEcsactUnrealExecutionOptions::CreateEntityBuilder {
 public:
 	CreateEntityBuilder(CreateEntityBuilder&&);
 	~CreateEntityBuilder();
+
+	auto operator=(CreateEntityBuilder&&) -> CreateEntityBuilder&;
 
 	template<typename C>
 	auto AddComponent(const C& Component) && -> CreateEntityBuilder {

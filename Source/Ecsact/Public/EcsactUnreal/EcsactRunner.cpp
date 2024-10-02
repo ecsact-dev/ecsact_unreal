@@ -59,6 +59,18 @@ auto UEcsactRunner::IsTickable() const -> bool {
 	return !IsTemplate() && !bIsStopped;
 }
 
+auto UEcsactRunner::GetSubsystem( //
+	UClass* SubsystemClass
+) -> UEcsactRunnerSubsystem* {
+	for(auto* subsystem : RunnerSubsystems) {
+		if(subsystem->IsA(SubsystemClass)) {
+			return subsystem;
+		}
+	}
+
+	return nullptr;
+}
+
 auto UEcsactRunner::CreateEntity() -> EcsactRunnerCreateEntityBuilder {
 	return {this, GeneratePlaceholderId()};
 }
@@ -84,10 +96,6 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 			continue;
 		}
 
-		if(uclass->HasAnyFlags(RF_Transient)) {
-			continue;
-		}
-
 		subsystem_types.Add(uclass);
 	}
 
@@ -97,6 +105,7 @@ auto UEcsactRunner::InitRunnerSubsystems() -> void {
 	for(auto t : subsystem_types) {
 		UE_LOG(Ecsact, Log, TEXT("Starting ecsact subsystem %s"), *t->GetName());
 		auto subsystem = NewObject<UEcsactRunnerSubsystem>(this, t);
+		subsystem->OwningRunner = this;
 		subsystem->AddToRoot();
 		RunnerSubsystems.Add(subsystem);
 	}
@@ -173,6 +182,13 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 	if(create_callback) {
 		create_callback->Execute(entity_id);
 		self->CreateEntityCallbacks.Remove(placeholder_entity_id);
+	} else {
+		UE_LOG(
+			Ecsact,
+			Error,
+			TEXT("Unable to find create entity callback for placeholder %i"),
+			(int32)placeholder_entity_id
+		);
 	}
 
 	for(auto subsystem : self->RunnerSubsystems) {

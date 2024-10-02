@@ -21,6 +21,14 @@ auto UEcsactRunnerSubsystem::RemoveComponentRaw(
 ) -> void {
 }
 
+auto UEcsactRunnerSubsystem::GetRunner() -> class UEcsactRunner* {
+	return OwningRunner;
+}
+
+auto UEcsactRunnerSubsystem::GetRunner() const -> const class UEcsactRunner* {
+	return OwningRunner;
+}
+
 auto UEcsactRunnerSubsystem::RunnerStart_Implementation(
 	class UEcsactRunner* Runner
 ) -> void {

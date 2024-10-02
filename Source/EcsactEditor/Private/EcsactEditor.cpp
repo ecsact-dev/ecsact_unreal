@@ -449,6 +449,7 @@ auto FEcsactEditorModule::RunBuild() -> void {
 		"-o",
 		ecsact_runtime_path,
 		"--temp=" + temp_dir,
+		"--debug",
 	};
 
 	switch(settings->BuildReportFilter) {

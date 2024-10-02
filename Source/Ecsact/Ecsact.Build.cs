@@ -66,6 +66,14 @@ public class Ecsact : ModuleRules {
 			"ECSACT_SERIALIZE_API_LOAD_AT_RUNTIME",
 			"ECSACT_STATIC_API_LOAD_AT_RUNTIME",
 		});
+		PrivateDefinitions.AddRange(new string[] {
+			"ECSACT_CORE_API_EXPORT",
+			"ECSACT_DYNAMIC_API_EXPORT",
+			"ECSACT_ASYNC_API_EXPORT",
+			"ECSACT_META_API_EXPORT",
+			"ECSACT_SERIALIZE_API_EXPORT",
+			"ECSACT_STATIC_API_EXPORT",
+		});
 
 		var EcsactSources = GetEcsactSources();
 
@@ -74,9 +82,9 @@ public class Ecsact : ModuleRules {
 				"codegen",
 				"--format=json",
 				"--plugin=cpp_header",
-				"--plugin=systems_header",
-				"--plugin=cpp_systems_header",
-				"--plugin=cpp_systems_source"
+				// "--plugin=systems_header",
+				// "--plugin=cpp_systems_header",
+				// "--plugin=cpp_systems_source"
 			};
 
 			if(!File.Exists(EcsactUnrealCodegenPluginPath)) {

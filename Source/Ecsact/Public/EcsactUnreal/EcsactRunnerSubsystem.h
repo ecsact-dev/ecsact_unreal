@@ -9,6 +9,7 @@ class ECSACT_API UEcsactRunnerSubsystem : public UObject {
 	GENERATED_BODY() // NOLINT
 
 	friend class UEcsactRunner;
+	class UEcsactRunner* OwningRunner;
 
 protected:
 	virtual void InitComponentRaw(
@@ -26,6 +27,9 @@ protected:
 		ecsact_component_id ComponentId,
 		const void*         ComponentData
 	);
+
+	auto GetRunner() -> class UEcsactRunner*;
+	auto GetRunner() const -> const class UEcsactRunner*;
 
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")

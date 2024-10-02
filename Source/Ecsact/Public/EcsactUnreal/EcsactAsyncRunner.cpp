@@ -21,6 +21,22 @@ auto UEcsactAsyncRunner::StreamImpl(
 	ecsact_component_id ComponentId,
 	const void*         ComponentData
 ) -> void {
+#if WITH_EDITORONLY_DATA
+	if(ecsact_async_stream == nullptr) {
+		static bool notified_log = false;
+		if(!notified_log) {
+			notified_log = true;
+			UE_LOG(
+				Ecsact,
+				Error,
+				TEXT("ecsact_async_stream unavailable - cannot use "
+						 "UEcsactRunner::Stream")
+			);
+		}
+		return;
+	}
+#endif
+
 	ecsact_async_stream(Entity, ComponentId, ComponentData);
 }
 
@@ -92,22 +108,13 @@ auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
 					UE_LOG(
 						Ecsact,
 						Warning,
-						TEXT("Unbound async done callback for request %i (self=%i)"),
-						req_id,
-						(intptr_t)self
+						TEXT("Unbound async done callback for request %i"),
+						req_id
 					);
 				}
 			}
 
 			cbs->Empty();
-		} else {
-			UE_LOG(
-				Ecsact,
-				Warning,
-				TEXT("No async done callbacks for request %i (self=%i)"),
-				req_id,
-				(intptr_t)self
-			);
 		}
 	}
 }
@@ -142,6 +149,8 @@ auto UEcsactAsyncRunner::EnqueueExecutionOptions() -> void {
 	if(ExecutionOptions->IsNotEmpty()) {
 		auto req_id =
 			ecsact_async_enqueue_execution_options(*ExecutionOptions->GetCPtr());
+		// UE_LOG(Ecsact, Warning, TEXT("SENDING STUFF! req_id=%i"), req_id);
+		// ExecutionOptions->DebugLog();
 		ExecutionOptions->Clear();
 	}
 }

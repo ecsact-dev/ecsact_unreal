@@ -85,6 +85,15 @@ public:
 	auto GetStatId() const -> TStatId override;
 	auto IsTickable() const -> bool override;
 
+	auto GetSubsystem(UClass* SubsystemClass) -> class UEcsactRunnerSubsystem*;
+
+	template<typename RunnerSubsystemT>
+	auto GetSubsystem() -> RunnerSubsystemT* {
+		return Cast<RunnerSubsystemT>( //
+			GetSubsystem(RunnerSubsystemT::StaticClass())
+		);
+	}
+
 	template<typename C>
 	auto Stream(ecsact_entity_id Entity, const C& StreamComponent) -> void {
 		return StreamImpl(Entity, C::id, &StreamComponent);
@@ -139,8 +148,9 @@ public:
 	auto AddComponent( //
 		const C& Component
 	) && -> EcsactRunnerCreateEntityBuilder {
-		static_cast<UEcsactUnrealExecutionOptions::CreateEntityBuilder&&>(Builder)
-			.AddComponent<C>(Component);
+		using CreateEntityBuilder =
+			UEcsactUnrealExecutionOptions::CreateEntityBuilder;
+		Builder = std::move(Builder).AddComponent<C>(Component);
 		return std::move(*this);
 	}
 

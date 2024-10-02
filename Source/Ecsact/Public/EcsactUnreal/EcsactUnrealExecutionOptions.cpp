@@ -1,4 +1,5 @@
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "EcsactUnreal/Ecsact.h"
 #include "ecsact/runtime/common.h"
 
 using CreateEntityBuilder = UEcsactUnrealExecutionOptions::CreateEntityBuilder;
@@ -41,6 +42,54 @@ auto UEcsactUnrealExecutionOptions::Clear() -> void {
 	ExecOpts = {};
 }
 
+#ifdef WITH_EDITORONLY_DATA
+auto UEcsactUnrealExecutionOptions::DebugLog() const -> void {
+	if(!IsNotEmpty()) {
+		UE_LOG(Ecsact, Warning, TEXT("(Empty Ecsact Execution Options)"));
+		return;
+	}
+
+	UE_LOG(Ecsact, Log, TEXT(" == Ecsact Execution Options =="));
+	UE_LOG(Ecsact, Log, TEXT("\tActions Length: %i"), ExecOpts.actions_length);
+	for(auto i = 0; ExecOpts.actions_length > i; ++i) {
+		UE_LOG(
+			Ecsact,
+			Log,
+			TEXT("\t\tActionId: %i"),
+			ExecOpts.actions[i].action_id
+		);
+	}
+	UE_LOG(
+		Ecsact,
+		Log,
+		TEXT("\tCreate Entities Length: %i"),
+		ExecOpts.create_entities_length
+	);
+	for(auto i = 0; ExecOpts.create_entities_length > i; ++i) {
+		UE_LOG(
+			Ecsact,
+			Log,
+			TEXT("\t\tPlaceholderId: %i"),
+			ExecOpts.create_entities[i]
+		);
+		for(auto ci = 0; ExecOpts.create_entities_components_length[i] > ci; ++ci) {
+			auto comp_count = ExecOpts.create_entities_components_length[i];
+			auto comps = ExecOpts.create_entities_components[ci];
+			UE_LOG(
+				Ecsact,
+				Log,
+				TEXT("\t\tCreate Entity Component Count: %i"),
+				comp_count
+			);
+			for(auto cci = 0; cci > comp_count; ++cci) {
+				auto comp = comps[cci];
+				UE_LOG(Ecsact, Log, TEXT("\t\t\tComponentId: %i"), comp.component_id);
+			}
+		}
+	}
+}
+#endif
+
 auto UEcsactUnrealExecutionOptions::CreateEntity(
 	ecsact_placeholder_entity_id PlaceholderId
 ) -> CreateEntityBuilder {
@@ -49,7 +98,7 @@ auto UEcsactUnrealExecutionOptions::CreateEntity(
 
 CreateEntityBuilder::CreateEntityBuilder(
 	UEcsactUnrealExecutionOptions* Owner,
-	ecsact_placeholder_entity_id   PlacerholderId
+	ecsact_placeholder_entity_id   PlaceholderId
 )
 	: bValid(true), Owner(Owner), PlaceholderId(PlaceholderId) {
 }
@@ -57,21 +106,42 @@ CreateEntityBuilder::CreateEntityBuilder(
 CreateEntityBuilder::CreateEntityBuilder(CreateEntityBuilder&& Other) {
 	bValid = Other.bValid;
 	Owner = Other.Owner;
+	PlaceholderId = Other.PlaceholderId;
 	ComponentList = std::move(Other.ComponentList);
 
 	Other.bValid = false;
 	Other.Owner = nullptr;
+	Other.PlaceholderId = {};
 	Other.ComponentList = {};
 }
 
+auto CreateEntityBuilder::operator=(CreateEntityBuilder&& Other
+) -> CreateEntityBuilder& {
+	bValid = Other.bValid;
+	Owner = Other.Owner;
+	PlaceholderId = Other.PlaceholderId;
+	ComponentList = std::move(Other.ComponentList);
+
+	Other.bValid = false;
+	Other.Owner = nullptr;
+	Other.PlaceholderId = {};
+	Other.ComponentList = {};
+	return *this;
+}
+
 CreateEntityBuilder::~CreateEntityBuilder() {
-	if(bValid && Owner) {
+	if(bValid) {
 		Finish();
 	}
 }
 
 auto CreateEntityBuilder::Finish() -> void {
-	if(!bValid || !Owner) {
+	if(!bValid) {
+		return;
+	}
+
+	if(!Owner) {
+		UE_LOG(Ecsact, Error, TEXT("Cannot create entity - Runner not valid"));
 		return;
 	}
 
