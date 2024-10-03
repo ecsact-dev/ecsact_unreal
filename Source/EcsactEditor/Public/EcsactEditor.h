@@ -1,11 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EcsactUnreal/Ecsact.h"
 #include "Modules/ModuleManager.h"
+#include "HAL/PlatformFileManager.h"
+#include "Misc/Paths.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(EcsactEditor, Log, All);
 
-class FEcsactEditorModule : public IModuleInterface {
+class ECSACTEDITOR_API FEcsactEditorModule : public IModuleInterface {
 	FDelegateHandle        SourcesWatchHandle;
 	FDelegateHandle        PluginBinariesWatchHandle;
 	TMap<FString, FString> CodegenPluginHotReloadNames;
@@ -34,6 +37,8 @@ public:
 		FOnExitDelegate        OnExit
 	) -> void;
 
+	static auto GetAllEcsactFiles() -> TArray<FString>;
+
 	auto RunCodegen() -> void;
 	auto RunBuild() -> void;
 
@@ -42,4 +47,6 @@ public:
 	auto PreUnloadCallback() -> void override;
 	auto PostLoadCallback() -> void override;
 	auto SupportsDynamicReloading() -> bool override;
+
+	static auto Get() -> FEcsactEditorModule&;
 };

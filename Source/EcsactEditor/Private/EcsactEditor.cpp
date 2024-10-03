@@ -1,6 +1,8 @@
 #include "EcsactEditor.h"
 #include "Async/Async.h"
 #include "Async/TaskGraphInterfaces.h"
+#include "CoreGlobals.h"
+#include "EcsactUnreal/Ecsact.h"
 #include "Editor.h"
 #include "Engine/GameViewportClient.h"
 #include "ISettingsModule.h"
@@ -84,13 +86,6 @@ static auto GetDirectoryWatcher() -> IDirectoryWatcher* {
 		TEXT("DirectoryWatcher")
 	);
 	return watcher.Get();
-}
-
-static auto GetAllEcsactFiles() -> TArray<FString> {
-	auto& fm = FPlatformFileManager::Get().GetPlatformFile();
-	auto  files = TArray<FString>{};
-	fm.FindFilesRecursively(files, *SourceDir(), TEXT(".ecsact"));
-	return files;
 }
 
 auto FEcsactEditorModule::SpawnEcsactCli(
@@ -616,6 +611,19 @@ auto FEcsactEditorModule::OnEcsactSettingsModified() -> bool {
 	}
 
 	return true;
+}
+
+auto FEcsactEditorModule::Get() -> FEcsactEditorModule& {
+	return FModuleManager::Get().GetModuleChecked<FEcsactEditorModule>(
+		"EcsactEditor"
+	);
+}
+
+auto FEcsactEditorModule::GetAllEcsactFiles() -> TArray<FString> {
+	auto& fm = FPlatformFileManager::Get().GetPlatformFile();
+	auto  files = TArray<FString>{};
+	fm.FindFilesRecursively(files, *SourceDir(), TEXT(".ecsact"));
+	return files;
 }
 
 #undef LOCTEXT_NAMESPACE
