@@ -406,10 +406,11 @@ auto FEcsactEditorModule::RunCodegen() -> void {
 auto FEcsactEditorModule::RunBuild() -> void {
 	const auto* settings = GetDefault<UEcsactSettings>();
 
-	auto ecsact_runtime_path = FPaths::Combine(
-		FPaths::ProjectDir(),
-		TEXT("Binaries/Win64/EcsactRuntime.dll")
-	);
+	if(!settings->bEnableBuild) {
+		return;
+	}
+
+	auto ecsact_runtime_path = settings->GetEcsactRuntimeLibraryPath();
 	auto temp_dir = FPaths::ConvertRelativePathToFull(FPaths::Combine(
 		FPaths::ProjectIntermediateDir(),
 		"Temp",

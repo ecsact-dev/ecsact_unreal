@@ -32,11 +32,48 @@ public:
 	UEcsactSettings();
 
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Config, Category = "Build")
-	EEcsactBuildReportFilter BuildReportFilter;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Build")
+	bool bEnableBuild = false;
+
+	/**
+	 * This path is used when not using the built-in ecsact recipe build system.
+	 * (i.e. bEnableBuild is false)
+	 */
+	UPROPERTY(
+		EditAnywhere,
+		Config,
+		Category = "Build",
+		Meta = ( //
+			EditCondition = "!bEnableBuild",
+			EditConditionHides
+		)
+	)
+	FString CustomEcsactRuntimeLibraryPath;
+
+	UPROPERTY(
+		EditAnywhere,
+		Config,
+		Category = "Build",
+		Meta = ( //
+			EditCondition = "bEnableBuild",
+			EditConditionHides
+		)
+	)
+	EEcsactBuildReportFilter BuildReportFilter;
+
+	UPROPERTY(
+		EditAnywhere,
+		Config,
+		Category = "Build",
+		Meta = ( //
+			EditCondition = "bEnableBuild",
+			EditConditionHides
+		)
+	)
 	TArray<FString> Recipes;
+
+	auto GetEcsactRuntimeLibraryPath() const -> FString;
 
 	auto GetValidRecipes() const -> TArray<FString>;
 

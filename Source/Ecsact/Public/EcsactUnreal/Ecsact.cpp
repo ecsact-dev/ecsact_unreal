@@ -36,10 +36,8 @@ auto FEcsactModule::Abort() -> void {
 }
 
 auto FEcsactModule::LoadEcsactRuntime() -> void {
-	auto ecsact_runtime_path = FPaths::Combine(
-		FPaths::ProjectDir(),
-		TEXT("Binaries/Win64/EcsactRuntime.dll")
-	);
+	const auto* settings = GetDefault<UEcsactSettings>();
+	auto        ecsact_runtime_path = settings->GetEcsactRuntimeLibraryPath();
 	UE_LOG(Ecsact, Log, TEXT("Loading ecsact runtime %s"), *ecsact_runtime_path);
 
 	EcsactRuntimeHandle = FPlatformProcess::GetDllHandle(*ecsact_runtime_path);
