@@ -56,8 +56,11 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {
+	auto runner = EcsactUnrealExecution::Runner();
+	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
 	UE_LOG(Ecsact, Error, TEXT("OnRequestDone??"));
 	if(!bConnectFailed) {
+		async_events->TriggerGenericConnectCallbacks();
 		OnSuccess.Broadcast({});
 	}
 	OnDone.Broadcast({});

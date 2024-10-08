@@ -22,6 +22,9 @@ class ECSACT_API UEcsactAsyncRunner //
 	TMap<ecsact_async_request_id, TArray<FAsyncRequestErrorCallback>>
 		RequestErrorCallbacks;
 
+	TArray<TDelegate<void()>> GenericConnectCallbacks;
+	TArray<TDelegate<void()>> GenericDisconnectCallbacks;
+
 	static auto OnAsyncErrorRaw(
 		ecsact_async_error       async_err,
 		int                      request_ids_length,
@@ -47,6 +50,9 @@ protected:
 		const void*         ComponentData
 	) -> void override;
 
+	auto TriggerGenericConnectCallbacks() -> void override;
+	auto TriggerGenericDisconnectCallbacks() -> void override;
+
 public:
 	UEcsactAsyncRunner();
 
@@ -67,6 +73,8 @@ public:
 		const char*               ConnectionStr,
 		FAsyncRequestDoneCallback Callback
 	) -> void;
+
+	auto Disconnect() -> void;
 
 	auto OnRequestDone(
 		ecsact_async_request_id   RequestId,

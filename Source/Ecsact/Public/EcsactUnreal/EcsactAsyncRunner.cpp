@@ -45,7 +45,32 @@ auto UEcsactAsyncRunner::Connect( //
 	FAsyncRequestDoneCallback Callback
 ) -> void {
 	auto req_id = ecsact_async_connect(ConnectionStr);
-	OnRequestDone(req_id, std::move(Callback));
+	OnRequestDone(
+		req_id,
+		FAsyncRequestDoneCallback::CreateLambda( //
+			[this, Callback = std::move(Callback)] {
+				Callback.ExecuteIfBound();
+				TriggerGenericConnectCallbacks();
+			}
+		)
+	);
+}
+
+auto UEcsactAsyncRunner::Disconnect() -> void {
+	ecsact_async_disconnect();
+	TriggerGenericConnectCallbacks();
+}
+
+auto UEcsactAsyncRunner::TriggerGenericConnectCallbacks() -> void {
+	for(auto& cb : GenericConnectCallbacks) {
+		cb.ExecuteIfBound();
+	}
+}
+
+auto UEcsactAsyncRunner::TriggerGenericDisconnectCallbacks() -> void {
+	for(auto& cb : GenericDisconnectCallbacks) {
+		cb.ExecuteIfBound();
+	}
 }
 
 auto UEcsactAsyncRunner::OnAsyncErrorRaw(
@@ -149,8 +174,6 @@ auto UEcsactAsyncRunner::EnqueueExecutionOptions() -> void {
 	if(ExecutionOptions->IsNotEmpty()) {
 		auto req_id =
 			ecsact_async_enqueue_execution_options(*ExecutionOptions->GetCPtr());
-		// UE_LOG(Ecsact, Warning, TEXT("SENDING STUFF! req_id=%i"), req_id);
-		// ExecutionOptions->DebugLog();
 		ExecutionOptions->Clear();
 	}
 }
