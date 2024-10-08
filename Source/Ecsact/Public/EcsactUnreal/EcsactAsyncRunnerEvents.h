@@ -15,6 +15,7 @@ public:
 class IEcsactAsyncRunnerEvents {
 	GENERATED_BODY() // NOLINT
 	friend class UEcsactAsyncConnectBlueprintAction;
+	friend class UEcsactBlueprintLibrary;
 
 public:
 	DECLARE_DELEGATE(FAsyncRequestDoneCallback); // NOLINT
