@@ -29,6 +29,12 @@ auto UEcsactRunnerSubsystem::GetRunner() const -> const class UEcsactRunner* {
 	return OwningRunner;
 }
 
+auto UEcsactRunnerSubsystem::AsyncConnect_Implementation() -> void {
+}
+
+auto UEcsactRunnerSubsystem::AsyncDisconnect_Implementation() -> void {
+}
+
 auto UEcsactRunnerSubsystem::RunnerStart_Implementation(
 	class UEcsactRunner* Runner
 ) -> void {

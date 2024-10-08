@@ -45,6 +45,25 @@ public:
 		class UEcsactRunner* Runner
 	) -> void;
 
+	/**
+	 * Called when an ecsact_async_connect succeeds
+	 * NOTE: For 'async' runners only
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
+	void AsyncConnect();
+
+	virtual auto AsyncConnect_Implementation() -> void;
+
+	/**
+	 * Called when an ecsact_async_disconnect is called or if an error that
+	 * triggers a disconnect occurs.
+	 * NOTE: For 'async' runners only
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
+	void AsyncDisconnect();
+
+	virtual auto AsyncDisconnect_Implementation() -> void;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void EntityCreated(int32 Entity);
 
