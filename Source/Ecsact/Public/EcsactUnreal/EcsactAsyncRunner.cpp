@@ -41,8 +41,9 @@ auto UEcsactAsyncRunner::StreamImpl(
 }
 
 auto UEcsactAsyncRunner::Connect( //
-	const char*               ConnectionStr,
-	FAsyncRequestDoneCallback Callback
+	const char*                ConnectionStr,
+	FAsyncRequestErrorCallback ErrorCallback,
+	FAsyncRequestDoneCallback  Callback
 ) -> void {
 	auto req_id = ecsact_async_connect(ConnectionStr);
 	OnRequestDone(
@@ -51,6 +52,14 @@ auto UEcsactAsyncRunner::Connect( //
 			[this, Callback = std::move(Callback)] {
 				Callback.ExecuteIfBound();
 				TriggerGenericConnectCallbacks();
+			}
+		)
+	);
+	OnRequestError(
+		req_id,
+		FAsyncRequestErrorCallback::CreateLambda( //
+			[this, ErrorCallback = std::move(ErrorCallback)](ecsact_async_error err) {
+				ErrorCallback.ExecuteIfBound(err);
 			}
 		)
 	);
@@ -86,6 +95,13 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 	for(auto req_id : request_ids) {
 		auto cbs = self->RequestErrorCallbacks.Find(req_id);
 
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Received request error raw (req=%i)"),
+			static_cast<int>(req_id)
+		);
+
 		if(cbs && !cbs->IsEmpty()) {
 			for(auto& cb : *cbs) {
 				if(!cb.ExecuteIfBound(async_err)) {
@@ -113,6 +129,8 @@ auto UEcsactAsyncRunner::OnExecuteSysErrorRaw(
 	void*                        callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+
+	UE_LOG(LogTemp, Warning, TEXT("System error"));
 }
 
 auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
@@ -126,6 +144,13 @@ auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
 
 	for(auto req_id : request_ids) {
 		auto cbs = self->RequestDoneCallbacks.Find(req_id);
+
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Received request done raw (req=%i)"),
+			static_cast<int>(req_id)
+		);
 
 		if(cbs && !cbs->IsEmpty()) {
 			for(auto& cb : *cbs) {
@@ -190,6 +215,12 @@ auto UEcsactAsyncRunner::OnRequestDone(
 	FAsyncRequestDoneCallback Callback
 ) -> void {
 	check(RequestId != ECSACT_INVALID_ID(async_request));
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Adding request done handler (req=%i)"),
+		static_cast<int>(RequestId)
+	);
 	RequestDoneCallbacks.FindOrAdd(RequestId).Add(Callback);
 }
 
@@ -199,4 +230,12 @@ auto UEcsactAsyncRunner::OnRequestError(
 ) -> void {
 	check(RequestId != ECSACT_INVALID_ID(async_request));
 	RequestErrorCallbacks.FindOrAdd(RequestId).Add(Callback);
+}
+
+auto UEcsactAsyncRunner::OnConnect(TDelegate<void()> Callback) -> void {
+	GenericConnectCallbacks.Add(std::move(Callback));
+}
+
+auto UEcsactAsyncRunner::OnDisconnect(TDelegate<void()> Callback) -> void {
+	GenericDisconnectCallbacks.Add(std::move(Callback));
 }

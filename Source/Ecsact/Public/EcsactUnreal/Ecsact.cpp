@@ -6,6 +6,7 @@
 #include "Misc/Paths.h"
 #include "EcsactUnreal/EcsactAsyncRunner.h"
 #include "ecsact/runtime.h"
+#include "Engine/World.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactModule"
 

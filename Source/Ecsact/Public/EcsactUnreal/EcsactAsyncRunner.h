@@ -70,11 +70,16 @@ public:
 	 * Wrapper around ecsact_async_connect
 	 */
 	auto Connect( //
-		const char*               ConnectionStr,
-		FAsyncRequestDoneCallback Callback
+		const char*                ConnectionStr,
+		FAsyncRequestErrorCallback ErrorCallback,
+		FAsyncRequestDoneCallback  Callback
 	) -> void;
 
 	auto Disconnect() -> void;
+
+	auto OnConnect(TDelegate<void()> Callback) -> void override;
+
+	auto OnDisconnect(TDelegate<void()> Callback) -> void override;
 
 	auto OnRequestDone(
 		ecsact_async_request_id   RequestId,
