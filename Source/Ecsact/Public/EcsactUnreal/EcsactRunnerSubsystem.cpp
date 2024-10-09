@@ -1,4 +1,5 @@
 #include "EcsactRunnerSubsystem.h"
+#include "EcsactRunner.h"
 
 auto UEcsactRunnerSubsystem::InitComponentRaw(
 	ecsact_entity_id    EntityId,
@@ -27,6 +28,20 @@ auto UEcsactRunnerSubsystem::GetRunner() -> class UEcsactRunner* {
 
 auto UEcsactRunnerSubsystem::GetRunner() const -> const class UEcsactRunner* {
 	return OwningRunner;
+}
+
+auto UEcsactRunnerSubsystem::GetWorld() const -> class UWorld* {
+	if(OwningRunner != nullptr) {
+		return OwningRunner->GetWorld();
+	} else {
+		return nullptr;
+	}
+}
+
+auto UEcsactRunnerSubsystem::AsyncConnected_Implementation() -> void {
+}
+
+auto UEcsactRunnerSubsystem::AsyncDisconnected_Implementation() -> void {
 }
 
 auto UEcsactRunnerSubsystem::RunnerStart_Implementation(

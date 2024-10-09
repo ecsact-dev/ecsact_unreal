@@ -1,4 +1,5 @@
 #include "EcsactUnreal/EcsactRunner.h"
+#include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/UObjectIterator.h"
@@ -43,6 +44,10 @@ auto UEcsactRunner::Stop() -> void {
 
 auto UEcsactRunner::IsStopped() const -> bool {
 	return bIsStopped;
+}
+
+auto UEcsactRunner::HasAsyncEvents() const -> bool {
+	return Cast<IEcsactAsyncRunnerEvents>(this) != nullptr;
 }
 
 auto UEcsactRunner::Tick(float DeltaTime) -> void {
@@ -176,6 +181,13 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 	void*                        callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Received entity created callback for %i"),
+		static_cast<int>(entity_id)
+	);
 
 	auto create_callback =
 		self->CreateEntityCallbacks.Find(placeholder_entity_id);
