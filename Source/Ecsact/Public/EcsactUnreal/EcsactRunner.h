@@ -61,6 +61,7 @@ protected:
 	class UEcsactUnrealExecutionOptions* ExecutionOptions;
 
 	auto GetEventsCollector() -> ecsact_execution_events_collector*;
+	auto GetRunnerSubsystems() -> TArray<class UEcsactRunnerSubsystem*>;
 
 protected:
 	virtual auto InitRunnerSubsystems() -> void;

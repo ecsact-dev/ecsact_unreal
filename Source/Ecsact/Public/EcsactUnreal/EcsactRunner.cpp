@@ -25,6 +25,11 @@ UEcsactRunner::UEcsactRunner() : EventsCollector{} {
 	EventsCollector.entity_destroyed_callback = ThisClass::OnEntityDestroyedRaw;
 }
 
+auto UEcsactRunner::GetRunnerSubsystems()
+	-> TArray<class UEcsactRunnerSubsystem*> {
+	return RunnerSubsystems;
+}
+
 auto UEcsactRunner::StreamImpl(
 	ecsact_entity_id    Entity,
 	ecsact_component_id ComponentId,

@@ -2,6 +2,7 @@
 #include "EcsactUnreal/Ecsact.h"
 #include <span>
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "EcsactUnreal/EcsactRunnerSubsystem.h"
 #include "EcsactUnreal/EcsactUnrealEventsCollector.h"
 #include "ecsact/runtime/async.h"
 #include "ecsact/runtime/common.h"
@@ -71,14 +72,28 @@ auto UEcsactAsyncRunner::Disconnect() -> void {
 }
 
 auto UEcsactAsyncRunner::TriggerGenericConnectCallbacks() -> void {
+	UE_LOG(LogTemp, Log, TEXT("TriggerGenericConnectCallbacks()"));
 	for(auto& cb : GenericConnectCallbacks) {
 		cb.ExecuteIfBound();
+	}
+
+	for(auto subsystem : GetRunnerSubsystems()) {
+		if(subsystem) {
+			subsystem->AsyncConnected();
+		}
 	}
 }
 
 auto UEcsactAsyncRunner::TriggerGenericDisconnectCallbacks() -> void {
+	UE_LOG(LogTemp, Log, TEXT("TriggerGenericDisconnectCallbacks()"));
 	for(auto& cb : GenericDisconnectCallbacks) {
 		cb.ExecuteIfBound();
+	}
+
+	for(auto subsystem : GetRunnerSubsystems()) {
+		if(subsystem) {
+			subsystem->AsyncDisconnected();
+		}
 	}
 }
 
