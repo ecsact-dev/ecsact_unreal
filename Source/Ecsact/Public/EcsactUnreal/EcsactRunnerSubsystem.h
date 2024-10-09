@@ -32,6 +32,8 @@ protected:
 	auto GetRunner() const -> const class UEcsactRunner*;
 
 public:
+	auto GetWorld() const -> class UWorld* override;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void RunnerStart(class UEcsactRunner* Runner);
 
@@ -50,9 +52,9 @@ public:
 	 * NOTE: For 'async' runners only
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
-	void AsyncConnect();
+	void AsyncConnected();
 
-	virtual auto AsyncConnect_Implementation() -> void;
+	virtual auto AsyncConnected_Implementation() -> void;
 
 	/**
 	 * Called when an ecsact_async_disconnect is called or if an error that
@@ -60,9 +62,9 @@ public:
 	 * NOTE: For 'async' runners only
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
-	void AsyncDisconnect();
+	void AsyncDisconnected();
 
-	virtual auto AsyncDisconnect_Implementation() -> void;
+	virtual auto AsyncDisconnected_Implementation() -> void;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void EntityCreated(int32 Entity);

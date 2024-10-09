@@ -81,6 +81,9 @@ public:
 	virtual auto Stop() -> void;
 	virtual auto IsStopped() const -> bool;
 
+	UFUNCTION(BlueprintPure)
+	bool HasAsyncEvents() const;
+
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
 	auto IsTickable() const -> bool override;
