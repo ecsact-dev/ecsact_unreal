@@ -1,5 +1,6 @@
 #include "EcsactUnreal/EcsactRunner.h"
 #include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
+#include "EcsactUnreal/EcsactSettings.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -101,25 +102,12 @@ auto UEcsactRunner::GeneratePlaceholderId() -> ecsact_placeholder_entity_id {
 }
 
 auto UEcsactRunner::InitRunnerSubsystems() -> void {
-	auto subsystem_types = TArray<UClass*>{};
-	for(auto it = TObjectIterator<UClass>{}; it; ++it) {
-		auto uclass = *it;
-
-		if(!uclass->IsChildOf(UEcsactRunnerSubsystem::StaticClass())) {
-			continue;
-		}
-
-		if(uclass->HasAnyClassFlags(CLASS_Abstract)) {
-			continue;
-		}
-
-		subsystem_types.Add(uclass);
-	}
+	const auto* settings = GetDefault<UEcsactSettings>();
 
 	check(RunnerSubsystems.IsEmpty());
 	RunnerSubsystems.Empty();
 
-	for(auto t : subsystem_types) {
+	for(auto t : settings->RunnerSubsystems) {
 		UE_LOG(Ecsact, Log, TEXT("Starting ecsact subsystem %s"), *t->GetName());
 		auto subsystem = NewObject<UEcsactRunnerSubsystem>(this, t);
 		subsystem->OwningRunner = this;

@@ -93,6 +93,6 @@ public:
 	)
 	TSubclassOf<UEcsactRunner> CustomRunnerClass;
 
-	UPROPERTY(VisibleAnywhere, Config, Category = "Runtime")
+	UPROPERTY(EditAnywhere, Config, Category = "Runtime")
 	TArray<TSubclassOf<class UEcsactRunnerSubsystem>> RunnerSubsystems;
 };
