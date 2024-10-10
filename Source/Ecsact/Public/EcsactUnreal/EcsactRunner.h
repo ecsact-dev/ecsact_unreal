@@ -88,6 +88,7 @@ public:
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
 	auto IsTickable() const -> bool override;
+	auto GetWorld() const -> class UWorld* override;
 
 	auto GetSubsystem(UClass* SubsystemClass) -> class UEcsactRunnerSubsystem*;
 

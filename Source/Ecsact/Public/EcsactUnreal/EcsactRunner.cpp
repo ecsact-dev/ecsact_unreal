@@ -1,6 +1,9 @@
 #include "EcsactUnreal/EcsactRunner.h"
 #include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
+#include "Engine/GameViewportClient.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/UObjectIterator.h"
 #include "EcsactUnreal/EcsactRunnerSubsystem.h"
@@ -23,6 +26,10 @@ UEcsactRunner::UEcsactRunner() : EventsCollector{} {
 	EventsCollector.remove_callback = ThisClass::OnRemoveComponentRaw;
 	EventsCollector.entity_created_callback = ThisClass::OnEntityCreatedRaw;
 	EventsCollector.entity_destroyed_callback = ThisClass::OnEntityDestroyedRaw;
+}
+
+auto UEcsactRunner::GetWorld() const -> UWorld* {
+	return GEngine->GameViewport->GetWorld();
 }
 
 auto UEcsactRunner::GetRunnerSubsystems()
