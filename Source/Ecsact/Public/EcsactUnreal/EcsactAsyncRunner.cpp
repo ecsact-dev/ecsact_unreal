@@ -38,7 +38,7 @@ auto UEcsactAsyncRunner::StreamImpl(
 	}
 #endif
 
-	ecsact_async_stream(Entity, ComponentId, ComponentData);
+	ecsact_async_stream(Entity, ComponentId, ComponentData, nullptr);
 }
 
 auto UEcsactAsyncRunner::Connect( //

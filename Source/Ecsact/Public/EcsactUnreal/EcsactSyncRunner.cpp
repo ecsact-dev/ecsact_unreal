@@ -15,7 +15,7 @@ auto UEcsactSyncRunner::StreamImpl(
 		return;
 	}
 
-	ecsact_stream(registry_id, Entity, ComponentId, ComponentData);
+	ecsact_stream(registry_id, Entity, ComponentId, ComponentData, nullptr);
 }
 
 auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
