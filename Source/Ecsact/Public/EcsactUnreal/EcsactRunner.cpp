@@ -93,6 +93,10 @@ auto UEcsactRunner::CreateEntity() -> EcsactRunnerCreateEntityBuilder {
 	return {this, GeneratePlaceholderId()};
 }
 
+auto UEcsactRunner::DestroyEntity(ecsact_entity_id Entity) -> void {
+	ExecutionOptions->DestroyEntity(Entity);
+}
+
 auto UEcsactRunner::GeneratePlaceholderId() -> ecsact_placeholder_entity_id {
 	static ecsact_placeholder_entity_id LastPlaceholderId = {};
 	using ref_t = std::add_lvalue_reference_t<

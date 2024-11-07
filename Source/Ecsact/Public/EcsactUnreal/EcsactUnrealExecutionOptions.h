@@ -56,6 +56,8 @@ public:
 
 	inline auto DestroyEntity(ecsact_entity_id Entity) -> void {
 		DestroyEntityList.Add(Entity);
+		ExecOpts.destroy_entities_length = DestroyEntityList.Num();
+		ExecOpts.destroy_entities = DestroyEntityList.GetData();
 	}
 
 	template<typename A>

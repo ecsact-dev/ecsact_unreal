@@ -111,6 +111,8 @@ public:
 	 */
 	auto CreateEntity() -> EcsactRunnerCreateEntityBuilder;
 
+	auto DestroyEntity(ecsact_entity_id Entity) -> void;
+
 	template<typename A>
 	auto PushAction(const A& Action) -> void {
 		return ExecutionOptions->PushAction<A>(Action);
