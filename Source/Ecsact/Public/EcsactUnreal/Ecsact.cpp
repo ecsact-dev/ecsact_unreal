@@ -81,7 +81,8 @@ auto FEcsactModule::UnloadEcsactRuntime() -> void {
 #undef RESET_ECSACT_FN
 
 	if(EcsactRuntimeHandle) {
-		FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
+		// NOTE: Freeing the ecsact runtime causes unreal editor to crash
+		// FPlatformProcess::FreeDllHandle(EcsactRuntimeHandle);
 		EcsactRuntimeHandle = nullptr;
 	}
 }
