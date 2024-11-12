@@ -1,6 +1,7 @@
 #include "Ecsact.h"
 #include "CoreGlobals.h"
 #include "EcsactUnreal/EcsactSettings.h"
+#include "Engine/World.h"
 #include "HAL/PlatformProcess.h"
 #include "Logging/LogVerbosity.h"
 #include "Misc/Paths.h"
@@ -64,7 +65,6 @@ auto FEcsactModule::LoadEcsactRuntime() -> void {
 	static_assert(true, "require ;")
 	FOR_EACH_ECSACT_API_FN(LOAD_ECSACT_FN);
 #undef LOAD_ECSACT_FN
-	StartRunner();
 }
 
 auto FEcsactModule::UnloadEcsactRuntime() -> void {
@@ -74,7 +74,9 @@ auto FEcsactModule::UnloadEcsactRuntime() -> void {
 		ecsact_async_disconnect();
 	}
 
-	StopRunner();
+	for(auto i = 0; RunnerWorlds.Num() > i; ++i) {
+		StopRunner(i);
+	}
 
 #define RESET_ECSACT_FN(fn, UNUSED_PARAM) fn = nullptr
 	FOR_EACH_ECSACT_API_FN(RESET_ECSACT_FN);
@@ -95,8 +97,53 @@ auto FEcsactModule::StartupModule() -> void {
 	}
 #if WITH_EDITOR
 	FEditorDelegates::PreBeginPIE.AddRaw(this, &FEcsactModule::OnPreBeginPIE);
-	FEditorDelegates::EndPIE.AddRaw(this, &FEcsactModule::OnPrePIEEnded);
+	FEditorDelegates::ShutdownPIE.AddRaw(this, &FEcsactModule::OnShutdownPIE);
 #endif
+	FWorldDelegates::OnPreWorldInitialization.AddRaw(
+		this,
+		&FEcsactModule::OnPreWorldInitialization
+	);
+	FWorldDelegates::OnPostWorldCleanup.AddRaw(
+		this,
+		&FEcsactModule::OnPostWorldCleanup
+	);
+}
+
+auto FEcsactModule::OnPreWorldInitialization( //
+	UWorld*                            World,
+	const UWorld::InitializationValues IVS
+) -> void {
+	switch(World->WorldType.GetValue()) {
+		case EWorldType::None:
+		case EWorldType::Editor:
+		case EWorldType::EditorPreview:
+		case EWorldType::GamePreview:
+		case EWorldType::GameRPC:
+		case EWorldType::Inactive:
+			return;
+		case EWorldType::PIE:
+		case EWorldType::Game:
+			break;
+	}
+
+	auto index = RunnerWorlds.Num();
+	RunnerWorlds.Add(World);
+	Runners.AddDefaulted();
+	check(RunnerWorlds.Num() == Runners.Num());
+	StartRunner(index);
+}
+
+auto FEcsactModule::OnPostWorldCleanup( //
+	UWorld* World,
+	bool    bSessionEnded,
+	bool    bCleanupResources
+) -> void {
+	for(auto i = 0; RunnerWorlds.Num() > i; ++i) {
+		if(RunnerWorlds[i].Get() == World) {
+			StopRunner(i);
+			break;
+		}
+	}
 }
 
 auto FEcsactModule::ShutdownModule() -> void {
@@ -116,55 +163,91 @@ auto FEcsactModule::OnPreBeginPIE(bool _) -> void {
 	LoadEcsactRuntime();
 }
 
-auto FEcsactModule::OnPrePIEEnded(bool _) -> void {
+auto FEcsactModule::OnShutdownPIE(bool _) -> void {
 	UnloadEcsactRuntime();
 }
 
-auto FEcsactModule::StartRunner() -> void {
+auto FEcsactModule::StartRunner(int32 Index) -> void {
 	const auto* settings = GetDefault<UEcsactSettings>();
 
-	if(Runner != nullptr) {
+	if(Index >= Runners.Num()) {
+		UE_LOG(
+			Ecsact,
+			Error,
+			TEXT("StartRunner() was called before the associated world was "
+					 "initialized")
+		);
+		return;
+	}
+
+	for(auto Runner : Runners) {
+		if(Runner.IsValid()) {
+			UE_LOG(
+				Ecsact,
+				Error,
+				TEXT("Multiple Ecsact runners are not supported at this time")
+			);
+			return;
+		}
+	}
+
+	if(auto Runner = Runners[Index].Get(); Runner) {
 		UE_LOG(
 			Ecsact,
 			Warning,
 			TEXT("StartRunner() was called while runner was already running. "
 					 "Stopping previous one before starting new.")
 		);
-		StopRunner();
+		StopRunner(Index);
+	}
+
+	auto World = RunnerWorlds[Index].Get();
+
+	if(!World) {
+		UE_LOG(Ecsact, Error, TEXT("StartRunner() was called on invalid world"));
+		return;
 	}
 
 	switch(settings->Runner) {
 		case EEcsactRuntimeRunnerType::Automatic:
 			if(ecsact_async_flush_events == nullptr) {
-				Runner = NewObject<UEcsactSyncRunner>();
+				Runners[Index] = NewObject<UEcsactSyncRunner>();
 			} else {
-				Runner = NewObject<UEcsactAsyncRunner>();
+				Runners[Index] = NewObject<UEcsactAsyncRunner>();
 			}
 			break;
 		case EEcsactRuntimeRunnerType::Asynchronous:
-			Runner = NewObject<UEcsactAsyncRunner>();
+			Runners[Index] = NewObject<UEcsactAsyncRunner>();
 			break;
 		case EEcsactRuntimeRunnerType::Custom:
 			if(settings->CustomRunnerClass != nullptr) {
-				Runner = NewObject<UEcsactRunner>(nullptr, settings->CustomRunnerClass);
+				Runners[Index] =
+					NewObject<UEcsactRunner>(nullptr, settings->CustomRunnerClass);
 			}
 			break;
 	}
 
-	if(Runner != nullptr) {
+	if(auto Runner = Runners[Index].Get(); Runner) {
 		UE_LOG(
 			Ecsact,
 			Log,
 			TEXT("Starting ecsact runner: %s"),
 			*Runner->GetClass()->GetName()
 		);
+		Runner->World = World;
 		Runner->AddToRoot();
 		Runner->Start();
 	}
 }
 
-auto FEcsactModule::StopRunner() -> void {
-	if(Runner != nullptr) {
+auto FEcsactModule::StopRunner(int32 Index) -> void {
+	if(Index >= Runners.Num()) {
+		return;
+	}
+
+	auto Runner = Runners[Index].Get();
+
+	if(Runner) {
 		UE_LOG(
 			Ecsact,
 			Log,
@@ -174,7 +257,7 @@ auto FEcsactModule::StopRunner() -> void {
 		Runner->Stop();
 		Runner->RemoveFromRoot();
 		Runner->MarkAsGarbage();
-		Runner.Reset();
+		Runners[Index].Reset();
 	}
 }
 

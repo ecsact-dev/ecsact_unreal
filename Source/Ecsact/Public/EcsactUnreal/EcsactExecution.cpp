@@ -7,6 +7,16 @@ auto EcsactUnrealExecution::DeltaTime() -> float {
 	return DeltaTime_;
 }
 
-auto EcsactUnrealExecution::Runner() -> TWeakObjectPtr<class UEcsactRunner> {
-	return FEcsactModule::Get().Runner;
+auto EcsactUnrealExecution::Runner( //
+	class UWorld* World
+) -> TWeakObjectPtr<class UEcsactRunner> {
+	check(World);
+	auto mod = FEcsactModule::Get();
+	for(auto i = 0; mod.RunnerWorlds.Num() > i; ++i) {
+		if(mod.RunnerWorlds[i].Get() == World) {
+			return mod.Runners[i];
+		}
+	}
+
+	return {};
 }

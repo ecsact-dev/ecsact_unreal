@@ -19,7 +19,12 @@ public:
 	static auto DeltaTime() -> float;
 
 	/**
+	 * Gets the runner for the given world.
 	 *
+	 * NOTE: Prefer using GetRunner() in your associated class. Most Ecsact
+	 * classes will have this methods available. e.g. UEcsactRunnerSubsystem
 	 */
-	static auto Runner() -> TWeakObjectPtr<class UEcsactRunner>;
+	static auto Runner( //
+		class UWorld* World
+	) -> TWeakObjectPtr<class UEcsactRunner>;
 };

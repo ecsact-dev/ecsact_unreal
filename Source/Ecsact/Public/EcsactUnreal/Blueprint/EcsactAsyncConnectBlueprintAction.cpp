@@ -14,7 +14,7 @@ auto UEcsactAsyncConnectBlueprintAction::AsyncConnect( //
 
 auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 	UE_LOG(Ecsact, Warning, TEXT("AsyncConnectActivate()"));
-	auto runner = EcsactUnrealExecution::Runner();
+	auto runner = EcsactUnrealExecution::Runner(GetWorld());
 	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
 	if(!async_events) {
 		UE_LOG(
@@ -56,7 +56,7 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {
-	auto runner = EcsactUnrealExecution::Runner();
+	auto runner = EcsactUnrealExecution::Runner(GetWorld());
 	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
 	UE_LOG(Ecsact, Error, TEXT("OnRequestDone??"));
 	if(!bConnectFailed) {

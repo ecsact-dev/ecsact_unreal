@@ -30,7 +30,7 @@ UEcsactRunner::UEcsactRunner() : EventsCollector{} {
 }
 
 auto UEcsactRunner::GetWorld() const -> UWorld* {
-	return GEngine->GameViewport->GetWorld();
+	return World;
 }
 
 auto UEcsactRunner::GetRunnerSubsystems()

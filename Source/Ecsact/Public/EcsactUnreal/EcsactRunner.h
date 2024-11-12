@@ -11,6 +11,9 @@ UCLASS(Abstract)
 class ECSACT_API UEcsactRunner : public UObject, public FTickableGameObject {
 	GENERATED_BODY() // NOLINT
 
+	friend class FEcsactModule;
+
+	UWorld*                               World;
 	TArray<class UEcsactRunnerSubsystem*> RunnerSubsystems;
 	ecsact_execution_events_collector     EventsCollector;
 	bool                                  bIsStopped = false;

@@ -10,7 +10,9 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "Ecsact Runtime",
-		Meta = (BlueprintFunctionLibraryIcon = "Ecsact.ecsact-color-32x32")
+		Meta =
+			(WorldContext = "WorldContext",
+			 BlueprintFunctionLibraryIcon = "Ecsact.ecsact-color-32x32")
 	)
-	static void AsyncDisconnect();
+	static void AsyncDisconnect(const UObject* WorldContext);
 };
