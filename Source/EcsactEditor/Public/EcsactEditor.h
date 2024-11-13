@@ -29,6 +29,12 @@ private:
 	auto OnReceiveEcsactCliJsonMessage(FString Json) -> void;
 	auto AddMenuEntry(class FMenuBuilder& MenuBuilder) -> void;
 	auto GetUnrealCodegenPlugins() -> TArray<FString>;
+	auto LoadRunnerSubsystemBlueprints() -> void;
+
+	auto OnAssetsAdded(TConstArrayView<FAssetData> Assets) -> void;
+	auto OnAssetsUpdatedOnDisk(TConstArrayView<FAssetData> Assets) -> void;
+	auto OnAssetsRemoved(TConstArrayView<FAssetData> Assets) -> void;
+	auto OnAssetRegistryFilesLoaded() -> void;
 
 public:
 	auto SpawnEcsactCli( //

@@ -94,5 +94,16 @@ public:
 	TSubclassOf<UEcsactRunner> CustomRunnerClass;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Runtime")
-	TArray<TSubclassOf<class UEcsactRunnerSubsystem>> RunnerSubsystems;
+	bool bAutoCollectBlueprintRunnerSubsystems = true;
+
+	UPROPERTY(
+		EditAnywhere,
+		Config,
+		Category = "Runtime",
+		Meta = ( //
+			EditCondition = "!bAutoCollectBlueprintRunnerSubsystems",
+			AllowedClasses = "/Script/Ecsact.EcsactRunnerSubsystem"
+		)
+	)
+	TArray<TSoftClassPtr<class UEcsactRunnerSubsystem>> RunnerSubsystems;
 };

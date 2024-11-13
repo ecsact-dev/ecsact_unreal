@@ -16,10 +16,25 @@
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "Serialization/JsonReader.h"
 #include "EcsactUnreal/EcsactSettings.h"
+#include "EcsactUnreal/EcsactRunnerSubsystem.h"
+#include "Engine/Blueprint.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactEditorModule"
 
 DEFINE_LOG_CATEGORY(EcsactEditor);
+
+// clang-format off
+// We track some settings to detect if they change
+static decltype(GetDefault<UEcsactSettings>()->GetValidRecipes()) prev_valid_recipes = {};
+static auto prev_auto_subsystem = false;
+// clang-format on
+
+static auto UpdatePreviousSettings() -> void {
+	auto settings = GetDefault<UEcsactSettings>();
+	prev_valid_recipes = settings->GetValidRecipes();
+	prev_auto_subsystem = settings->bAutoCollectBlueprintRunnerSubsystems;
+}
 
 static auto SourceDir() -> FString {
 	return FPaths::Combine(FPaths::ProjectDir(), "Source");
@@ -215,6 +230,31 @@ auto FEcsactEditorModule::StartupModule() -> void {
 		this,
 		&FEcsactEditorModule::OnEditorInitialized
 	);
+
+	// clang-format off
+	auto& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	auto& AssetRegistry = AssetRegistryModule.Get();
+	// clang-format on
+
+	AssetRegistry.OnAssetsAdded().AddRaw(
+		this,
+		&FEcsactEditorModule::OnAssetsAdded
+	);
+	AssetRegistry.OnAssetsRemoved().AddRaw(
+		this,
+		&FEcsactEditorModule::OnAssetsRemoved
+	);
+	AssetRegistry.OnAssetsUpdatedOnDisk().AddRaw(
+		this,
+		&FEcsactEditorModule::OnAssetsUpdatedOnDisk
+	);
+	AssetRegistry.OnFilesLoaded().AddRaw(
+		this,
+		&FEcsactEditorModule::OnAssetRegistryFilesLoaded
+	);
+
+	// Set the initial previous settings to start detection
+	UpdatePreviousSettings();
 }
 
 auto FEcsactEditorModule::ShutdownModule() -> void {
@@ -232,6 +272,133 @@ auto FEcsactEditorModule::ShutdownModule() -> void {
 	SourcesWatchHandle = {};
 	PluginBinariesWatchHandle = {};
 	FEditorDelegates::OnEditorInitialized.RemoveAll(this);
+}
+
+auto FEcsactEditorModule::LoadRunnerSubsystemBlueprints() -> void {
+	auto* settings = GetMutableDefault<UEcsactSettings>();
+	auto  settings_changed = false;
+
+	// clang-format off
+	auto& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	auto& AssetRegistry = AssetRegistryModule.Get();
+	// clang-format on
+
+	auto filter = FARFilter{};
+	filter.ClassPaths.Add(UBlueprint::StaticClass()->GetClassPathName());
+	filter.bRecursiveClasses = true;
+	filter.bRecursivePaths = true;
+
+	auto asset_list = TArray<FAssetData>{};
+	AssetRegistry.GetAssets(filter, asset_list);
+
+	if(!asset_list.IsEmpty()) {
+		OnAssetsAdded(asset_list);
+	}
+}
+
+auto FEcsactEditorModule::OnAssetsAdded( //
+	TConstArrayView<FAssetData> Assets
+) -> void {
+	auto* settings = GetMutableDefault<UEcsactSettings>();
+	auto  settings_changed = false;
+
+	if(!settings->bAutoCollectBlueprintRunnerSubsystems) {
+		return;
+	}
+
+	for(auto& asset : Assets) {
+		auto generated_tag = asset.TagsAndValues.FindTag(TEXT("GeneratedClass"));
+		if(!generated_tag.IsSet()) {
+			continue;
+		}
+
+		auto generated_class = generated_tag.GetValue();
+		auto class_object_path =
+			FPackageName::ExportTextPathToObjectPath(*generated_class);
+		auto blueprint = Cast<UBlueprint>(asset.GetAsset());
+
+		if(blueprint) {
+			auto parent = blueprint->ParentClass;
+			if(parent && parent->IsChildOf(UEcsactRunnerSubsystem::StaticClass())) {
+				auto subsystem_soft_class_ptr = TSoftClassPtr<UEcsactRunnerSubsystem>(
+					FSoftObjectPath{class_object_path}
+				);
+
+				auto index =
+					settings->RunnerSubsystems.AddUnique(subsystem_soft_class_ptr);
+				if(index == settings->RunnerSubsystems.Num() - 1) {
+					UE_LOG(
+						EcsactEditor,
+						Log,
+						TEXT("Added blueprint Ecsact runner subsystem: %s"),
+						*class_object_path
+					);
+					settings_changed = true;
+				}
+			}
+		}
+	}
+
+	if(settings_changed) {
+		settings->TryUpdateDefaultConfigFile();
+	}
+}
+
+auto FEcsactEditorModule::OnAssetsUpdatedOnDisk(
+	TConstArrayView<FAssetData> Assets
+) -> void {
+}
+
+auto FEcsactEditorModule::OnAssetsRemoved( //
+	TConstArrayView<FAssetData> Assets
+) -> void {
+	auto* settings = GetMutableDefault<UEcsactSettings>();
+	auto  settings_changed = false;
+
+	if(!settings->bAutoCollectBlueprintRunnerSubsystems) {
+		return;
+	}
+
+	for(auto& asset : Assets) {
+		auto generated_tag = asset.TagsAndValues.FindTag(TEXT("GeneratedClass"));
+		if(!generated_tag.IsSet()) {
+			continue;
+		}
+
+		auto generated_class = generated_tag.GetValue();
+		auto class_object_path =
+			FPackageName::ExportTextPathToObjectPath(*generated_class);
+		auto blueprint = Cast<UBlueprint>(asset.FastGetAsset());
+
+		if(blueprint) {
+			auto parent = blueprint->ParentClass;
+			if(parent && parent->IsChildOf(UEcsactRunnerSubsystem::StaticClass())) {
+				auto subsystem_soft_class_ptr = TSoftClassPtr<UEcsactRunnerSubsystem>(
+					FSoftObjectPath{class_object_path}
+				);
+
+				auto removed =
+					settings->RunnerSubsystems.Remove(subsystem_soft_class_ptr);
+				if(removed > 0) {
+					settings_changed = true;
+					UE_LOG(
+						EcsactEditor,
+						Log,
+						TEXT("Removed blueprint Ecsact runner subsystem: %s"),
+						*class_object_path
+					);
+				}
+			}
+		}
+	}
+
+	if(settings_changed) {
+		settings->TryUpdateDefaultConfigFile();
+	}
+}
+
+auto FEcsactEditorModule::OnAssetRegistryFilesLoaded() -> void {
+	UE_LOG(LogTemp, Log, TEXT("OnAssetRegistryFilesLoaded"));
 }
 
 auto FEcsactEditorModule::AddMenuEntry(FMenuBuilder& MenuBuilder) -> void {
@@ -602,15 +769,18 @@ auto FEcsactEditorModule::OnReceiveEcsactCliJsonMessage(FString Json) -> void {
 
 auto FEcsactEditorModule::OnEcsactSettingsModified() -> bool {
 	const auto* settings = GetDefault<UEcsactSettings>();
-	static auto prev_valid_recipes = settings->GetValidRecipes();
 
-	auto valid_recipes = settings->GetValidRecipes();
+	if(prev_auto_subsystem != settings->bAutoCollectBlueprintRunnerSubsystems) {
+		if(settings->bAutoCollectBlueprintRunnerSubsystems) {
+			LoadRunnerSubsystemBlueprints();
+		}
+	}
 
-	if(prev_valid_recipes != valid_recipes) {
-		prev_valid_recipes = valid_recipes;
+	if(prev_valid_recipes != settings->GetValidRecipes()) {
 		RunBuild();
 	}
 
+	UpdatePreviousSettings();
 	return true;
 }
 

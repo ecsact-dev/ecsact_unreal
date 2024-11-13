@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Tickable.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "Subsystems/SubsystemCollection.h"
 #include "ecsact/runtime/common.h"
 #include "EcsactRunner.generated.h"
 
@@ -11,12 +12,14 @@ UCLASS(Abstract)
 class ECSACT_API UEcsactRunner : public UObject, public FTickableGameObject {
 	GENERATED_BODY() // NOLINT
 
-	friend class FEcsactModule;
+	friend class UEcsactWorldSubsystem;
+	friend class UEcsactGameInstanceSubsystem;
 
-	UWorld*                               World;
-	TArray<class UEcsactRunnerSubsystem*> RunnerSubsystems;
-	ecsact_execution_events_collector     EventsCollector;
-	bool                                  bIsStopped = false;
+	UWorld*                           World;
+	ecsact_execution_events_collector EventsCollector;
+	bool                              bIsStopped = false;
+
+	FSubsystemCollection<class UEcsactRunnerSubsystem> RunnerSubsystems;
 
 	TMap<ecsact_placeholder_entity_id, TDelegate<void(ecsact_entity_id)>>
 		CreateEntityCallbacks;
@@ -67,8 +70,6 @@ protected:
 	auto GetRunnerSubsystems() -> TArray<class UEcsactRunnerSubsystem*>;
 
 protected:
-	virtual auto InitRunnerSubsystems() -> void;
-	virtual auto ShutdownRunnerSubsystems() -> void;
 	virtual auto GeneratePlaceholderId() -> ecsact_placeholder_entity_id;
 	virtual auto StreamImpl(
 		ecsact_entity_id    Entity,
@@ -85,6 +86,8 @@ public:
 	virtual auto Stop() -> void;
 	virtual auto IsStopped() const -> bool;
 
+	virtual auto OnWorldChanged(UWorld* OldWorld, UWorld* NewWorld) -> void;
+
 	UFUNCTION(BlueprintPure)
 	bool HasAsyncEvents() const;
 
@@ -93,12 +96,35 @@ public:
 	auto IsTickable() const -> bool override;
 	auto GetWorld() const -> class UWorld* override;
 
-	auto GetSubsystem(UClass* SubsystemClass) -> class UEcsactRunnerSubsystem*;
+	/**
+	 * Get a Subsystem of specified type
+	 */
+	template<typename TSubsystemClass>
+	auto GetSubsystem() const -> TSubsystemClass* {
+		return RunnerSubsystems.GetSubsystem<TSubsystemClass>(
+			TSubsystemClass::StaticClass()
+		);
+	}
 
-	template<typename RunnerSubsystemT>
-	auto GetSubsystem() -> RunnerSubsystemT* {
-		return Cast<RunnerSubsystemT>( //
-			GetSubsystem(RunnerSubsystemT::StaticClass())
+	/**
+	 * Check if runner has a subsystem of the specified type
+	 */
+	template<typename TSubsystemClass>
+	auto HasSubsystem() const -> bool {
+		return GetSubsystem<TSubsystemClass>() != nullptr;
+	}
+
+	/**
+	 * Get all Subsystem of specified type, this is only necessary for interfaces
+	 * that can have multiple implementations instanced at a time.
+	 *
+	 * Do not hold onto this Array reference unless you are sure the lifetime is
+	 * less than that of UGameInstance
+	 */
+	template<typename TSubsystemClass>
+	auto GetSubsystemArray() const -> const TArray<TSubsystemClass*>& {
+		return RunnerSubsystems.GetSubsystemArray<TSubsystemClass>(
+			TSubsystemClass::StaticClass()
 		);
 	}
 

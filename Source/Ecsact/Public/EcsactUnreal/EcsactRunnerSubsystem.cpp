@@ -63,3 +63,9 @@ auto UEcsactRunnerSubsystem::EntityDestroyed_Implementation( //
 	int32 Entity
 ) -> void {
 }
+
+auto UEcsactRunnerSubsystem::WorldChanged_Implementation( //
+	UWorld* OldWorld,
+	UWorld* NewWorld
+) -> void {
+}

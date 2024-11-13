@@ -4,37 +4,39 @@
 #include "Engine/World.h"
 #include "Modules/ModuleManager.h"
 #include "UObject/WeakObjectPtr.h"
+#include "EcsactUnreal/RuntimeHandle.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(Ecsact, Log, All);
 
+namespace EcsactUnreal::Detail {
+auto CheckRuntimeNotLoaded(FEcsactModule&) -> bool;
+auto CheckRuntimeHandle(FEcsactModule&, const FEcsactRuntimeHandle&) -> bool;
+auto GetDefaultRuntimeDllHandle() -> void*;
+
+auto CheckUnloadable(FEcsactModule&, const FEcsactRuntimeHandle&) -> bool;
+auto UnloadPostDisconnect(FEcsactModule&, FEcsactRuntimeHandle&) -> void;
+auto UnloadPostReset(FEcsactModule&, FEcsactRuntimeHandle&) -> void;
+} // namespace EcsactUnreal::Detail
+
 class FEcsactModule : public IModuleInterface {
+	// clang-format off
 	friend class EcsactUnrealExecution;
+	friend auto EcsactUnreal::Detail::CheckRuntimeNotLoaded(FEcsactModule&) -> bool;
+	friend auto EcsactUnreal::Detail::CheckRuntimeHandle(FEcsactModule&, const FEcsactRuntimeHandle&) -> bool;
+	friend auto EcsactUnreal::Detail::GetDefaultRuntimeDllHandle() -> void*;
+	friend auto EcsactUnreal::Detail::CheckUnloadable(FEcsactModule&, const FEcsactRuntimeHandle&) -> bool;
+	friend auto EcsactUnreal::Detail::UnloadPostDisconnect(FEcsactModule&, FEcsactRuntimeHandle&) -> void;
+	friend auto EcsactUnreal::Detail::UnloadPostReset(FEcsactModule&, FEcsactRuntimeHandle&) -> void;
+	// clang-format on
 
 	static FEcsactModule* Self;
 	void*                 EcsactRuntimeHandle;
 
-	TArray<TWeakObjectPtr<UWorld>>              RunnerWorlds;
-	TArray<TWeakObjectPtr<class UEcsactRunner>> Runners;
-
-	auto LoadEcsactRuntime() -> void;
-	auto UnloadEcsactRuntime() -> void;
 	auto Abort() -> void;
-	auto OnPreBeginPIE(bool bIsSimulating) -> void;
-	auto OnShutdownPIE(const bool bIsSimulating) -> void;
 
-	auto OnPreWorldInitialization( //
-		UWorld*                            World,
-		const UWorld::InitializationValues IVS
-	) -> void;
-
-	auto OnPostWorldCleanup( //
-		UWorld* World,
-		bool    bSessionEnded,
-		bool    bCleanupResources
-	) -> void;
-
-	auto StartRunner(int32 Index) -> void;
-	auto StopRunner(int32 Index) -> void;
+	auto SetRuntimeHandle(const FEcsactRuntimeHandle&) -> void;
+	auto IsSameRuntimeHandle(const FEcsactRuntimeHandle&) -> bool;
+	auto FreeRuntimeHandle(FEcsactRuntimeHandle&) -> void;
 
 public:
 	static auto Get() -> FEcsactModule&;

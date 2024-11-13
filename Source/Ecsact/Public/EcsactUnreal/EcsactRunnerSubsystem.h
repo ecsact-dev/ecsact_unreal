@@ -1,11 +1,12 @@
 #pragma once
 
+#include "Subsystems/Subsystem.h"
 #include "ecsact/runtime/common.h"
 #include "EcsactRunnerSubsystem.generated.h"
 
 UCLASS(Abstract, Blueprintable)
 
-class ECSACT_API UEcsactRunnerSubsystem : public UObject {
+class ECSACT_API UEcsactRunnerSubsystem : public USubsystem {
 	GENERATED_BODY() // NOLINT
 
 	friend class UEcsactRunner;
@@ -40,11 +41,18 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void RunnerStop(class UEcsactRunner* Runner);
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
+	void WorldChanged(UWorld* OldWorld, UWorld* NewWorld);
+
 	virtual auto RunnerStart_Implementation( //
 		class UEcsactRunner* Runner
 	) -> void;
 	virtual auto RunnerStop_Implementation( //
 		class UEcsactRunner* Runner
+	) -> void;
+	virtual auto WorldChanged_Implementation( //
+		UWorld* OldWorld,
+		UWorld* NewWorld
 	) -> void;
 
 	/**

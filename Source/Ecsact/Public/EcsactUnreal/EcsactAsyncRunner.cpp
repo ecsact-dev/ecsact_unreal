@@ -77,7 +77,7 @@ auto UEcsactAsyncRunner::TriggerGenericConnectCallbacks() -> void {
 		cb.ExecuteIfBound();
 	}
 
-	for(auto subsystem : GetRunnerSubsystems()) {
+	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		if(subsystem) {
 			subsystem->AsyncConnected();
 		}
@@ -90,7 +90,7 @@ auto UEcsactAsyncRunner::TriggerGenericDisconnectCallbacks() -> void {
 		cb.ExecuteIfBound();
 	}
 
-	for(auto subsystem : GetRunnerSubsystems()) {
+	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		if(subsystem) {
 			subsystem->AsyncDisconnected();
 		}

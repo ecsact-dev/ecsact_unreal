@@ -33,11 +33,6 @@ auto UEcsactRunner::GetWorld() const -> UWorld* {
 	return World;
 }
 
-auto UEcsactRunner::GetRunnerSubsystems()
-	-> TArray<class UEcsactRunnerSubsystem*> {
-	return RunnerSubsystems;
-}
-
 auto UEcsactRunner::StreamImpl(
 	ecsact_entity_id    Entity,
 	ecsact_component_id ComponentId,
@@ -47,12 +42,40 @@ auto UEcsactRunner::StreamImpl(
 
 auto UEcsactRunner::Start() -> void {
 	bIsStopped = false;
-	InitRunnerSubsystems();
+
+	RunnerSubsystems.Initialize(this);
+
+	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
+		if(subsystem) {
+			UE_LOG(
+				Ecsact,
+				Log,
+				TEXT("Starting Ecsact runner subsystem: %s"),
+				*subsystem->GetClass()->GetName()
+			);
+			subsystem->OwningRunner = this;
+			subsystem->RunnerStart(this);
+		}
+	}
 }
 
 auto UEcsactRunner::Stop() -> void {
-	ShutdownRunnerSubsystems();
+	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
+		if(subsystem) {
+			subsystem->RunnerStop(this);
+			subsystem->OwningRunner = nullptr;
+		}
+	}
+	RunnerSubsystems.Deinitialize();
 	bIsStopped = true;
+}
+
+void UEcsactRunner::OnWorldChanged(UWorld* OldWorld, UWorld* NewWorld) {
+	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
+		if(subsystem) {
+			subsystem->WorldChanged(OldWorld, NewWorld);
+		}
+	}
 }
 
 auto UEcsactRunner::IsStopped() const -> bool {
@@ -77,18 +100,6 @@ auto UEcsactRunner::IsTickable() const -> bool {
 	return !IsTemplate() && !bIsStopped;
 }
 
-auto UEcsactRunner::GetSubsystem( //
-	UClass* SubsystemClass
-) -> UEcsactRunnerSubsystem* {
-	for(auto* subsystem : RunnerSubsystems) {
-		if(subsystem->IsA(SubsystemClass)) {
-			return subsystem;
-		}
-	}
-
-	return nullptr;
-}
-
 auto UEcsactRunner::CreateEntity() -> EcsactRunnerCreateEntityBuilder {
 	return {this, GeneratePlaceholderId()};
 }
@@ -105,36 +116,6 @@ auto UEcsactRunner::GeneratePlaceholderId() -> ecsact_placeholder_entity_id {
 	return LastPlaceholderId;
 }
 
-auto UEcsactRunner::InitRunnerSubsystems() -> void {
-	const auto* settings = GetDefault<UEcsactSettings>();
-
-	check(RunnerSubsystems.IsEmpty());
-	RunnerSubsystems.Empty();
-
-	for(auto t : settings->RunnerSubsystems) {
-		UE_LOG(Ecsact, Log, TEXT("Starting ecsact subsystem %s"), *t->GetName());
-		auto subsystem = NewObject<UEcsactRunnerSubsystem>(this, t);
-		subsystem->OwningRunner = this;
-		subsystem->AddToRoot();
-		RunnerSubsystems.Add(subsystem);
-	}
-
-	for(auto subsystem : RunnerSubsystems) {
-		subsystem->RunnerStart(this);
-	}
-}
-
-auto UEcsactRunner::ShutdownRunnerSubsystems() -> void {
-	for(auto subsystem : RunnerSubsystems) {
-		if(subsystem == nullptr) {
-			continue;
-		}
-		subsystem->RunnerStop(this);
-	}
-
-	RunnerSubsystems.Empty();
-}
-
 auto UEcsactRunner::GetEventsCollector() -> ecsact_execution_events_collector* {
 	return &EventsCollector;
 }
@@ -147,7 +128,7 @@ auto UEcsactRunner::OnInitComponentRaw(
 	void*               callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
-	for(auto subsystem : self->RunnerSubsystems) {
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		subsystem->InitComponentRaw(entity_id, component_id, component_data);
 	}
 }
@@ -160,7 +141,7 @@ auto UEcsactRunner::OnUpdateComponentRaw(
 	void*               callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
-	for(auto subsystem : self->RunnerSubsystems) {
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		subsystem->UpdateComponentRaw(entity_id, component_id, component_data);
 	}
 }
@@ -173,7 +154,7 @@ auto UEcsactRunner::OnRemoveComponentRaw(
 	void*               callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
-	for(auto subsystem : self->RunnerSubsystems) {
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		subsystem->RemoveComponentRaw(entity_id, component_id, component_data);
 	}
 }
@@ -207,7 +188,7 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 		);
 	}
 
-	for(auto subsystem : self->RunnerSubsystems) {
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		subsystem->EntityCreated(static_cast<int32>(entity_id));
 	}
 }
@@ -219,7 +200,7 @@ auto UEcsactRunner::OnEntityDestroyedRaw(
 	void*                        callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
-	for(auto subsystem : self->RunnerSubsystems) {
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
 		subsystem->EntityDestroyed(static_cast<int32>(entity_id));
 	}
 }

@@ -27,4 +27,14 @@ public:
 	static auto Runner( //
 		class UWorld* World
 	) -> TWeakObjectPtr<class UEcsactRunner>;
+
+	/**
+	 * Same as Runner(World) except a warning will be logged (only once!) if a
+	 * runner is not available. This is useful when you want to be a little more
+	 * graceful when working in an environment where a runner may not be available
+	 * in certain configurations.
+	 */
+	static auto RunnerOrWarn( //
+		class UWorld* World
+	) -> TWeakObjectPtr<class UEcsactRunner>;
 };

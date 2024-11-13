@@ -19,7 +19,7 @@
 		{
 			"Name": "Ecsact",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PreDefault"
 		},
 		{
 			"Name": "EcsactEditor",
