@@ -61,15 +61,6 @@ auto UEcsactAsyncRunner::Connect( //
 		FAsyncRequestErrorCallback::CreateLambda( //
 			[this, ErrorCallback = std::move(ErrorCallback)](ecsact_async_error err) {
 				ErrorCallback.ExecuteIfBound(err);
-
-				switch(err) {
-					case ECSACT_ASYNC_ERR_EXECUTION_MERGE_FAILURE:
-					case ECSACT_ASYNC_ERR_CONNECTION_CLOSED:
-						TriggerGenericDisconnectCallbacks();
-						break;
-					default:
-						break;
-				}
 			}
 		)
 	);
@@ -130,6 +121,15 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 					);
 				}
 			}
+		}
+
+		switch(async_err) {
+			case ECSACT_ASYNC_ERR_EXECUTION_MERGE_FAILURE:
+			case ECSACT_ASYNC_ERR_CONNECTION_CLOSED:
+				self->TriggerGenericDisconnectCallbacks();
+				break;
+			default:
+				break;
 		}
 	}
 }
