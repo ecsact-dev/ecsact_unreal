@@ -139,14 +139,14 @@ auto EcsactUnreal::Detail::UnloadPostDisconnect(
 	FEcsactModule&        Module,
 	FEcsactRuntimeHandle& Handle
 ) -> void {
-	check(Module.IsSameRuntimeHandle(Handle));
+	check(Module.IsSameRuntimeHandle({}) || Module.IsSameRuntimeHandle(Handle));
 }
 
 auto EcsactUnreal::Detail::UnloadPostReset(
 	FEcsactModule&        Module,
 	FEcsactRuntimeHandle& Handle
 ) -> void {
-	check(Module.IsSameRuntimeHandle(Handle));
+	check(Module.IsSameRuntimeHandle({}) || Module.IsSameRuntimeHandle(Handle));
 	Module.FreeRuntimeHandle(Handle);
 }
 
