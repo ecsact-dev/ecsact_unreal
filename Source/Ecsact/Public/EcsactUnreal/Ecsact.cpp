@@ -127,7 +127,7 @@ auto EcsactUnreal::Detail::CheckUnloadable(
 		);
 		return false;
 	}
-	if(!Module.IsSameRuntimeHandle(Handle)) {
+	if(!Module.IsSameRuntimeHandle({}) && !Module.IsSameRuntimeHandle(Handle)) {
 		UE_LOG(Ecsact, Error, TEXT("Cannot unload old ecsact runtime handle"));
 		return false;
 	}
