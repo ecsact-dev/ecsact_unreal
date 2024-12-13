@@ -167,19 +167,12 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("Received entity created callback for %i"),
-		static_cast<int>(entity_id)
-	);
-
 	auto create_callback =
 		self->CreateEntityCallbacks.Find(placeholder_entity_id);
 	if(create_callback) {
 		create_callback->Execute(entity_id);
 		self->CreateEntityCallbacks.Remove(placeholder_entity_id);
-	} else {
+	} else if((int32)placeholder_entity_id > 0) {
 		UE_LOG(
 			Ecsact,
 			Error,
