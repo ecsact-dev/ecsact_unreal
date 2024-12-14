@@ -73,6 +73,8 @@ public:
 	)
 	TArray<FString> Recipes;
 
+	auto GetDefaultEcsactRuntimeLibraryPath() const -> FString;
+
 	auto GetEcsactRuntimeLibraryPath() const -> FString;
 
 	auto GetValidRecipes() const -> TArray<FString>;

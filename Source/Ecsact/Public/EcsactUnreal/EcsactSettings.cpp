@@ -4,13 +4,22 @@
 UEcsactSettings::UEcsactSettings() {
 }
 
+auto UEcsactSettings::GetDefaultEcsactRuntimeLibraryPath() const -> FString {
+	return FPaths::Combine(
+		FPaths::ProjectDir(),
+		TEXT("Binaries/Win64/EcsactRuntime.dll")
+	);
+}
+
 auto UEcsactSettings::GetEcsactRuntimeLibraryPath() const -> FString {
 #if WITH_EDITORONLY_DATA
 	if(bEnableBuild) {
-		return FPaths::Combine(
-			FPaths::ProjectDir(),
-			TEXT("Binaries/Win64/EcsactRuntime.dll")
-		);
+		return GetDefaultEcsactRuntimeLibraryPath();
+	}
+#endif
+
+	if(CustomEcsactRuntimeLibraryPath.IsEmpty()) {
+		return GetDefaultEcsactRuntimeLibraryPath();
 	} else {
 		if(!FPaths::IsRelative(CustomEcsactRuntimeLibraryPath)) {
 			return CustomEcsactRuntimeLibraryPath;
@@ -21,12 +30,6 @@ auto UEcsactSettings::GetEcsactRuntimeLibraryPath() const -> FString {
 			);
 		}
 	}
-#else
-	return FPaths::Combine(
-		FPaths::ProjectDir(),
-		TEXT("Binaries/Win64/EcsactRuntime.dll")
-	);
-#endif
 }
 
 #if WITH_EDITORONLY_DATA
