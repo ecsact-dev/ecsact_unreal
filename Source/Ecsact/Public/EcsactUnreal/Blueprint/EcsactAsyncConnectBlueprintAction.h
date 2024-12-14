@@ -68,4 +68,7 @@ public:
 	FAsyncConnectDoneCallback OnError;
 
 	auto Activate() -> void override;
+
+protected:
+	auto ConnectRequest(std::string ConnectionString) -> void;
 };

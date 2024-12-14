@@ -13,6 +13,12 @@ auto UEcsactAsyncConnectBlueprintAction::AsyncConnect( //
 }
 
 auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
+	ConnectRequest(Utf8ConnectionString);
+}
+
+auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
+	std::string ConnectionString
+) -> void {
 	UE_LOG(Ecsact, Warning, TEXT("AsyncConnectActivate()"));
 	auto runner = EcsactUnrealExecution::Runner(GetWorld());
 	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
@@ -28,7 +34,7 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 		return;
 	}
 
-	auto req_id = ecsact_async_connect(Utf8ConnectionString.c_str());
+	auto req_id = ecsact_async_connect(ConnectionString.c_str());
 	UE_LOG(Ecsact, Warning, TEXT("async connect request id=%i"), req_id);
 
 	if(req_id == ECSACT_INVALID_ID(async_request)) {
