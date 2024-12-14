@@ -3,7 +3,6 @@
 #include <span>
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "EcsactUnreal/EcsactRunnerSubsystem.h"
-#include "EcsactUnreal/EcsactUnrealEventsCollector.h"
 #include "ecsact/runtime/async.h"
 #include "ecsact/runtime/common.h"
 

@@ -1,7 +1,6 @@
 #include "EcsactUnreal/EcsactSyncRunner.h"
 #include "EcsactUnreal/Ecsact.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
-#include "EcsactUnreal/EcsactUnrealEventsCollector.h"
 #include "EcsactUnreal/EcsactExecution.h"
 #include "ecsact/runtime/core.h"
 
