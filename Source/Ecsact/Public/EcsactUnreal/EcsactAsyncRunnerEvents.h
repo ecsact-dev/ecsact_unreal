@@ -25,19 +25,19 @@ public:
 	);
 
 	/**
-	 * Add a generic 'connected' callback.
+	 * Add a generic 'session start' callback.
 	 * NOTE: only works if connecting via runner, not if using
-	 * ecsact_async_connect directly.
+	 * ecsact_async_start directly.
 	 */
-	virtual auto OnConnect(TDelegate<void()> Callback) -> void;
+	virtual auto OnAsyncSessionStart(TDelegate<void()> Callback) -> void;
 
 	/**
-	 * Add a generic 'disconnect' callback. Called when an error that is supposed
-	 * to disconnect the async implementation or when Disconnect is explicitly
-	 * called on the runner. NOTE: only works on the runner Disconnect method, not
-	 * if using ecsact_async_disconnect directly.
+	 * Add a generic 'session stop' callback. Called when an error that is
+	 * supposed to stop the async implementation or when AsyncSessionStop is
+	 * explicitly called on the runner. NOTE: only works on the runner Disconnect
+	 * method, not if using ecsact_async_stop directly.
 	 */
-	virtual auto OnDisconnect(TDelegate<void()> Callback) -> void;
+	virtual auto OnAsyncSessionStop(TDelegate<void()> Callback) -> void;
 
 	virtual auto OnRequestDone(
 		ecsact_async_request_id   RequestId,

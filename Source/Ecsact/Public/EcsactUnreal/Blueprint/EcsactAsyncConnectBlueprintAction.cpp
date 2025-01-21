@@ -34,31 +34,34 @@ auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
 		return;
 	}
 
-	auto req_id = ecsact_async_connect(ConnectionString.c_str());
-	UE_LOG(Ecsact, Warning, TEXT("async connect request id=%i"), req_id);
+	auto session_id = ecsact_async_start(
+		ConnectionString.c_str(),
+		static_cast<int32_t>(ConnectionString.size())
+	);
+	UE_LOG(Ecsact, Warning, TEXT("async connect session_id=%i"), session_id);
 
-	if(req_id == ECSACT_INVALID_ID(async_request)) {
-		UE_LOG(Ecsact, Error, TEXT("Invalid Request ID"));
-		OnError.Broadcast(EAsyncConnectError::InvalidRequestId);
+	if(session_id == ECSACT_INVALID_ID(async_session)) {
+		UE_LOG(Ecsact, Error, TEXT("Invalid Session ID"));
+		OnError.Broadcast(EAsyncConnectError::InvalidSessionId);
 		OnDone.Broadcast({});
 		return;
 	}
 
-	async_events->OnRequestDone(
-		req_id,
-		IEcsactAsyncRunnerEvents::FAsyncRequestDoneCallback::CreateUObject(
-			this,
-			&ThisClass::OnRequestDone
-		)
-	);
-
-	async_events->OnRequestError(
-		req_id,
-		IEcsactAsyncRunnerEvents::FAsyncRequestErrorCallback::CreateUObject(
-			this,
-			&ThisClass::OnRequestError
-		)
-	);
+	// async_events->OnRequestDone(
+	// 	req_id,
+	// 	IEcsactAsyncRunnerEvents::FAsyncRequestDoneCallback::CreateUObject(
+	// 		this,
+	// 		&ThisClass::OnRequestDone
+	// 	)
+	// );
+	//
+	// async_events->OnRequestError(
+	// 	req_id,
+	// 	IEcsactAsyncRunnerEvents::FAsyncRequestErrorCallback::CreateUObject(
+	// 		this,
+	// 		&ThisClass::OnRequestError
+	// 	)
+	// );
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {

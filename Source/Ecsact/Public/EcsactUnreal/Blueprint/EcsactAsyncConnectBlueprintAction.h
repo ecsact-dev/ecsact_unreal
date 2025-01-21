@@ -12,6 +12,7 @@ enum class EAsyncConnectError : uint8 {
 	InvalidRequestId,
 	PermissionDenied,
 	InvalidConnectionString,
+	InvalidSessionId,
 };
 
 /**

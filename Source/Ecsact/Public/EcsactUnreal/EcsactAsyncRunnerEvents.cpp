@@ -1,11 +1,11 @@
 #include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 
-auto IEcsactAsyncRunnerEvents::OnConnect( //
+auto IEcsactAsyncRunnerEvents::OnAsyncSessionStart( //
 	TDelegate<void()> Callback
 ) -> void {
 }
 
-auto IEcsactAsyncRunnerEvents::OnDisconnect( //
+auto IEcsactAsyncRunnerEvents::OnAsyncSessionStop( //
 	TDelegate<void()> Callback
 ) -> void {
 }

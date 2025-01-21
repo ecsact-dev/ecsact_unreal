@@ -1,6 +1,7 @@
 #include "EcsactUnreal/EcsactGameModuleImpl.h"
 #include "EcsactUnreal/Ecsact.h"
 #include "EcsactUnreal/RuntimeLoad.h"
+#include "EcsactUnreal/EcsactAsyncRunner.h"
 
 auto FEcsactGameModuleImpl::StartupModule() -> void {
 #if WITH_EDITOR
@@ -22,6 +23,7 @@ auto FEcsactGameModuleImpl::StartupModule() -> void {
 
 auto FEcsactGameModuleImpl::ShutdownModule() -> void {
 	if(RuntimeHandle) {
+		UEcsactAsyncRunner::StopAllAsyncSessions();
 		ECSACT_UNLOAD_RUNTIME(RuntimeHandle);
 	}
 }
@@ -33,6 +35,7 @@ auto FEcsactGameModuleImpl::OnPreBeginPIE(bool bIsSimulating) -> void {
 
 auto FEcsactGameModuleImpl::OnShutdownPIE(const bool bIsSimulating) -> void {
 	if(RuntimeHandle) {
+		UEcsactAsyncRunner::StopAllAsyncSessions();
 		ECSACT_UNLOAD_RUNTIME(RuntimeHandle);
 	}
 }

@@ -82,9 +82,6 @@
 			if(!EcsactUnreal::Detail::CheckUnloadable(module, Handle_)) { \
 				return;                                                     \
 			}                                                             \
-			if(ecsact_async_disconnect != nullptr) {                      \
-				ecsact_async_disconnect();                                  \
-			}                                                             \
 			EcsactUnreal::Detail::UnloadPostDisconnect(module, Handle_);  \
 			FOR_EACH_ECSACT_API_FN(ECSACT_API_FN_RESET_);                 \
 			EcsactUnreal::Detail::UnloadPostReset(module, Handle_);       \

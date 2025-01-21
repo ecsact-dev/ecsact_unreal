@@ -9,7 +9,7 @@ auto UEcsactBlueprintLibrary::AsyncDisconnect(const UObject* WorldContext
 	check(world);
 	auto runner = EcsactUnrealExecution::Runner(world);
 	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
-	ecsact_async_disconnect();
+	// ecsact_async_disconnect();
 	if(async_events) {
 		async_events->TriggerGenericDisconnectCallbacks();
 	}
