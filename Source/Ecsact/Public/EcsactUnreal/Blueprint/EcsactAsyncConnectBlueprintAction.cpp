@@ -1,6 +1,7 @@
 #include "EcsactUnreal/Blueprint/EcsactAsyncConnectBlueprintAction.h"
-#include "EcsactUnreal/EcsactExecution.h"
 #include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
+#include "EcsactUnreal/EcsactExecution.h"
+#include "EcsactUnreal/EcsactAsyncRunner.h"
 #include "ecsact/runtime/async.h"
 #include "EcsactUnreal/Ecsact.h"
 
@@ -21,55 +22,28 @@ auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
 ) -> void {
 	UE_LOG(Ecsact, Warning, TEXT("AsyncConnectActivate()"));
 	auto runner = EcsactUnrealExecution::Runner(GetWorld());
-	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
-	if(!async_events) {
+	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
+	if(!async_runner) {
 		UE_LOG(
 			Ecsact,
 			Error,
 			TEXT("Cannot use Ecsact async blueprint api with runner that does not "
-					 "implement IEcsactAsyncRunnerEvents")
+					 "inherit UEcsactAsyncRunner")
 		);
-		OnError.Broadcast(EAsyncConnectError::AsyncRunnerEventsUnavailable);
+		OnError.Broadcast(EAsyncConnectError::AsyncRunnerUnavailable);
 		OnDone.Broadcast({});
 		return;
 	}
 
-	auto req_id = ecsact_async_connect(ConnectionString.c_str());
-	UE_LOG(Ecsact, Warning, TEXT("async connect request id=%i"), req_id);
-
-	if(req_id == ECSACT_INVALID_ID(async_request)) {
-		UE_LOG(Ecsact, Error, TEXT("Invalid Request ID"));
-		OnError.Broadcast(EAsyncConnectError::InvalidRequestId);
-		OnDone.Broadcast({});
-		return;
-	}
-
-	async_events->OnRequestDone(
-		req_id,
-		IEcsactAsyncRunnerEvents::FAsyncRequestDoneCallback::CreateUObject(
-			this,
-			&ThisClass::OnRequestDone
-		)
+	SessionEventHandle = async_runner->AsyncSessionEvent.AddUObject(
+		this,
+		&ThisClass::OnAsyncSessionEvent
 	);
 
-	async_events->OnRequestError(
-		req_id,
-		IEcsactAsyncRunnerEvents::FAsyncRequestErrorCallback::CreateUObject(
-			this,
-			&ThisClass::OnRequestError
-		)
+	async_runner->AsyncSessionStart(
+		ConnectionString.c_str(),
+		static_cast<int32_t>(ConnectionString.size())
 	);
-}
-
-auto UEcsactAsyncConnectBlueprintAction::OnRequestDone() -> void {
-	auto runner = EcsactUnrealExecution::Runner(GetWorld());
-	auto async_events = Cast<IEcsactAsyncRunnerEvents>(runner);
-	UE_LOG(Ecsact, Error, TEXT("OnRequestDone??"));
-	if(!bConnectFailed) {
-		async_events->TriggerGenericConnectCallbacks();
-		OnSuccess.Broadcast({});
-	}
-	OnDone.Broadcast({});
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestError( //
@@ -84,6 +58,28 @@ auto UEcsactAsyncConnectBlueprintAction::OnRequestError( //
 			OnError.Broadcast(EAsyncConnectError::InvalidConnectionString);
 			break;
 	}
+}
 
-	bConnectFailed = true;
+auto UEcsactAsyncConnectBlueprintAction::OnAsyncSessionEvent( //
+	int32                    SessionId,
+	EEcsactAsyncSessionEvent Event
+) -> void {
+	auto runner = EcsactUnrealExecution::Runner(GetWorld());
+	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
+
+	if(async_runner) {
+		switch(Event) {
+			case EEcsactAsyncSessionEvent::Stopped:
+				async_runner->AsyncSessionEvent.Remove(SessionEventHandle);
+				OnDone.Broadcast({});
+				break;
+			case EEcsactAsyncSessionEvent::Started:
+				async_runner->AsyncSessionEvent.Remove(SessionEventHandle);
+				OnSuccess.Broadcast({});
+				OnDone.Broadcast({});
+				break;
+			default:
+				break;
+		}
+	}
 }

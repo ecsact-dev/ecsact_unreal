@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "ecsact/runtime/async.h"
 #include "EcsactAsyncConnectBlueprintAction.generated.h"
@@ -8,10 +9,11 @@
 UENUM()
 enum class EAsyncConnectError : uint8 {
 	NoError,
-	AsyncRunnerEventsUnavailable,
+	AsyncRunnerUnavailable,
 	InvalidRequestId,
 	PermissionDenied,
 	InvalidConnectionString,
+	InvalidSessionId,
 };
 
 /**
@@ -25,6 +27,8 @@ class ECSACT_API UEcsactAsyncConnectBlueprintAction
 
 	std::string Utf8ConnectionString;
 	bool        bConnectFailed = false;
+
+	FDelegateHandle SessionEventHandle;
 
 	auto OnRequestDone() -> void;
 	auto OnRequestError(ecsact_async_error Error) -> void;
@@ -71,4 +75,8 @@ public:
 
 protected:
 	auto ConnectRequest(std::string ConnectionString) -> void;
+	auto OnAsyncSessionEvent( //
+		int32                    SessionId,
+		EEcsactAsyncSessionEvent Event
+	) -> void;
 };

@@ -11,7 +11,6 @@ class UEcsactGameInstanceSubsystem : public UGameInstanceSubsystem {
 
 	friend class EcsactUnrealExecution;
 
-	FEcsactRuntimeHandle                RuntimeHandle;
 	TWeakObjectPtr<class UEcsactRunner> Runner;
 
 	auto OnPreWorldInitialization(

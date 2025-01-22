@@ -38,10 +38,9 @@ auto UEcsactRunnerSubsystem::GetWorld() const -> class UWorld* {
 	}
 }
 
-auto UEcsactRunnerSubsystem::AsyncConnected_Implementation() -> void {
-}
-
-auto UEcsactRunnerSubsystem::AsyncDisconnected_Implementation() -> void {
+auto UEcsactRunnerSubsystem::AsyncSessionEvent_Implementation( //
+	EEcsactAsyncSessionEvent Event
+) -> void {
 }
 
 auto UEcsactRunnerSubsystem::RunnerStart_Implementation(

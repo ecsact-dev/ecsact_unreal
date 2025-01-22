@@ -1,6 +1,7 @@
 #include "EcsactUnreal/EcsactGameModuleImpl.h"
 #include "EcsactUnreal/Ecsact.h"
 #include "EcsactUnreal/RuntimeLoad.h"
+#include "EcsactUnreal/EcsactAsyncRunner.h"
 
 auto FEcsactGameModuleImpl::StartupModule() -> void {
 #if WITH_EDITOR
@@ -22,17 +23,37 @@ auto FEcsactGameModuleImpl::StartupModule() -> void {
 
 auto FEcsactGameModuleImpl::ShutdownModule() -> void {
 	if(RuntimeHandle) {
+		if(ecsact_async_force_reset) {
+			ecsact_async_force_reset();
+		} else {
+			UE_LOG(
+				Ecsact,
+				Warning,
+				TEXT("ecsact_async_force_reset was not available during shutdown")
+			);
+		}
 		ECSACT_UNLOAD_RUNTIME(RuntimeHandle);
 	}
 }
 
 #if WITH_EDITOR
 auto FEcsactGameModuleImpl::OnPreBeginPIE(bool bIsSimulating) -> void {
+	UE_LOG(Ecsact, Log, TEXT("OnPreBeginPIE"));
 	RuntimeHandle = ECSACT_LOAD_RUNTIME();
 }
 
 auto FEcsactGameModuleImpl::OnShutdownPIE(const bool bIsSimulating) -> void {
+	UE_LOG(Ecsact, Log, TEXT("OnShutdownPIE"));
 	if(RuntimeHandle) {
+		if(ecsact_async_force_reset) {
+			ecsact_async_force_reset();
+		} else {
+			UE_LOG(
+				Ecsact,
+				Warning,
+				TEXT("ecsact_async_force_reset was not available during PIE shutdown")
+			);
+		}
 		ECSACT_UNLOAD_RUNTIME(RuntimeHandle);
 	}
 }

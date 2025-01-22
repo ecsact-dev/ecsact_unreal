@@ -5,6 +5,29 @@
 #include "ecsact/runtime/async.h"
 #include "EcsactAsyncRunnerEvents.generated.h"
 
+/// 1:1 match with ecsact_async_session_event
+UENUM(BlueprintType)
+enum class EEcsactAsyncSessionEvent : uint8 {
+	Stopped = 0,
+	Pending = 1,
+	Started = 2,
+};
+
+static_assert(
+	static_cast<int32_t>(EEcsactAsyncSessionEvent::Stopped) ==
+	static_cast<int32_t>(ECSACT_ASYNC_SESSION_STOPPED)
+);
+
+static_assert(
+	static_cast<int32_t>(EEcsactAsyncSessionEvent::Pending) ==
+	static_cast<int32_t>(ECSACT_ASYNC_SESSION_PENDING)
+);
+
+static_assert(
+	static_cast<int32_t>(EEcsactAsyncSessionEvent::Started) ==
+	static_cast<int32_t>(ECSACT_ASYNC_SESSION_START)
+);
+
 UINTERFACE(MinimalAPI)
 
 class UEcsactAsyncRunnerEvents : public UInterface {
@@ -19,25 +42,11 @@ class IEcsactAsyncRunnerEvents {
 
 public:
 	DECLARE_DELEGATE(FAsyncRequestDoneCallback); // NOLINT
-	DECLARE_DELEGATE_OneParam( // NOLINT
+	DECLARE_DELEGATE_TwoParams( // NOLINT
 		FAsyncRequestErrorCallback,
+		ecsact_async_session_id,
 		ecsact_async_error
 	);
-
-	/**
-	 * Add a generic 'connected' callback.
-	 * NOTE: only works if connecting via runner, not if using
-	 * ecsact_async_connect directly.
-	 */
-	virtual auto OnConnect(TDelegate<void()> Callback) -> void;
-
-	/**
-	 * Add a generic 'disconnect' callback. Called when an error that is supposed
-	 * to disconnect the async implementation or when Disconnect is explicitly
-	 * called on the runner. NOTE: only works on the runner Disconnect method, not
-	 * if using ecsact_async_disconnect directly.
-	 */
-	virtual auto OnDisconnect(TDelegate<void()> Callback) -> void;
 
 	virtual auto OnRequestDone(
 		ecsact_async_request_id   RequestId,
@@ -48,8 +57,4 @@ public:
 		ecsact_async_request_id    RequestId,
 		FAsyncRequestErrorCallback Callback
 	) -> void;
-
-protected:
-	virtual auto TriggerGenericConnectCallbacks() -> void;
-	virtual auto TriggerGenericDisconnectCallbacks() -> void;
 };
