@@ -2,6 +2,7 @@
 
 #include "Subsystems/Subsystem.h"
 #include "ecsact/runtime/common.h"
+#include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "EcsactRunnerSubsystem.generated.h"
 
 UCLASS(Abstract, Blueprintable)
@@ -56,23 +57,17 @@ public:
 	) -> void;
 
 	/**
-	 * Called when an ecsact_async_connect succeeds
+	 * Called when an ecsact async session event occurs
 	 * NOTE: For 'async' runners only
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
-	void AsyncConnected();
+	void AsyncSessionEvent( //
+		EEcsactAsyncSessionEvent Event
+	);
 
-	virtual auto AsyncConnected_Implementation() -> void;
-
-	/**
-	 * Called when an ecsact_async_disconnect is called or if an error that
-	 * triggers a disconnect occurs.
-	 * NOTE: For 'async' runners only
-	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
-	void AsyncDisconnected();
-
-	virtual auto AsyncDisconnected_Implementation() -> void;
+	virtual auto AsyncSessionEvent_Implementation( //
+		EEcsactAsyncSessionEvent Event
+	) -> void;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Ecsact Runner")
 	void EntityCreated(int32 Entity);

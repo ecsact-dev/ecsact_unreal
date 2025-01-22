@@ -8,6 +8,12 @@
 #include "EcsactUnreal/EcsactAsyncRunnerEvents.h"
 #include "EcsactAsyncRunner.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(
+	FEcsactAsyncSessionEventDelegate,
+	int32,
+	EEcsactAsyncSessionEvent
+);
+
 UCLASS(NotBlueprintable)
 
 class ECSACT_API UEcsactAsyncRunner //
@@ -15,17 +21,16 @@ class ECSACT_API UEcsactAsyncRunner //
 		public IEcsactAsyncRunnerEvents {
 	GENERATED_BODY() // NOLINT
 
-	static TMap<ecsact_async_session_id, UEcsactAsyncRunner*> sessions;
-	static ecsact_async_events_collector                      async_evc;
+	static TMap<ecsact_async_session_id, TWeakObjectPtr<UEcsactAsyncRunner>>
+		sessions;
+
+	ecsact_async_events_collector async_evc;
 
 	ecsact_async_session_id SessionId = ECSACT_INVALID_ID(async_session);
 	TMap<ecsact_async_request_id, TArray<FAsyncRequestDoneCallback>>
 		RequestDoneCallbacks;
 	TMap<ecsact_async_request_id, TArray<FAsyncRequestErrorCallback>>
 		RequestErrorCallbacks;
-
-	TArray<TDelegate<void()>> GenericConnectCallbacks;
-	TArray<TDelegate<void()>> GenericDisconnectCallbacks;
 
 	static auto OnAsyncErrorRaw(
 		ecsact_async_session_id  session_id,
@@ -48,6 +53,12 @@ class ECSACT_API UEcsactAsyncRunner //
 		void*                    callback_user_data
 	) -> void;
 
+	static auto OnAsyncSessionEventRaw(
+		ecsact_async_session_id    session_id,
+		ecsact_async_session_event event,
+		void*                      callback_user_data
+	) -> void;
+
 protected:
 	auto StreamImpl(
 		ecsact_entity_id    Entity,
@@ -55,11 +66,18 @@ protected:
 		const void*         ComponentData
 	) -> void override;
 
-	auto TriggerGenericConnectCallbacks() -> void override;
-	auto TriggerGenericDisconnectCallbacks() -> void override;
-
 public:
-	static void StopAllAsyncSessions();
+	static auto StopAllAsyncSessions() -> void;
+
+	/**
+	 * Gets an async runner by the session ID if it the session was started by an
+	 * UEcsactAsyncRunner or derived classes of UEcsactAsyncRunner.
+	 */
+	static auto GetAsyncRunnerBySession( //
+		ecsact_async_session_id id
+	) -> TWeakObjectPtr<UEcsactAsyncRunner>;
+
+	FEcsactAsyncSessionEventDelegate AsyncSessionEvent;
 
 	UEcsactAsyncRunner();
 
@@ -74,19 +92,14 @@ public:
 	auto EnqueueExecutionOptions() -> void;
 
 	/**
-	 * Wrapper around ecsact_async_connect
+	 * Wrapper around `ecsact_async_start`
 	 */
-	auto Connect( //
-		const char*                ConnectionStr,
-		FAsyncRequestErrorCallback ErrorCallback,
-		FAsyncRequestDoneCallback  Callback
-	) -> void;
+	auto AsyncSessionStart(const void* options, int32_t options_size) -> void;
 
-	auto Disconnect() -> void;
-
-	auto OnAsyncSessionStart(TDelegate<void()> Callback) -> void override;
-
-	auto OnAsyncSessionStop(TDelegate<void()> Callback) -> void override;
+	/**
+	 * Wrapper around `ecsact_async_stop`
+	 */
+	auto AsyncSessionStop() -> void;
 
 	auto OnRequestDone(
 		ecsact_async_request_id   RequestId,

@@ -6,33 +6,41 @@
 #include "ecsact/runtime/async.h"
 #include "ecsact/runtime/common.h"
 
-TMap<ecsact_async_session_id, UEcsactAsyncRunner*>
+TMap<ecsact_async_session_id, TWeakObjectPtr<UEcsactAsyncRunner>>
 	UEcsactAsyncRunner::sessions = {};
-
-ecsact_async_events_collector UEcsactAsyncRunner::async_evc = {
-	.async_error_callback = ThisClass::OnAsyncErrorRaw,
-	.async_error_callback_user_data = nullptr,
-
-	.system_error_callback = ThisClass::OnExecuteSysErrorRaw,
-	.system_error_callback_user_data = nullptr,
-
-	.async_request_done_callback = ThisClass::OnAsyncRequestDoneRaw,
-	.async_request_done_callback_user_data = nullptr,
-};
 
 auto UEcsactAsyncRunner::StopAllAsyncSessions() -> void {
 	for(auto&& [session_id, runner] : sessions) {
-		if(runner) {
+		if(runner.IsValid()) {
 			ecsact_async_stop(session_id);
-			runner->TriggerGenericConnectCallbacks();
-			runner->SessionId = ECSACT_INVALID_ID(async_session);
+			runner.Get()->SessionId = ECSACT_INVALID_ID(async_session);
 		}
 	}
 
 	sessions.Empty();
 }
 
-UEcsactAsyncRunner::UEcsactAsyncRunner() = default;
+auto UEcsactAsyncRunner::GetAsyncRunnerBySession( //
+	ecsact_async_session_id id
+) -> TWeakObjectPtr<UEcsactAsyncRunner> {
+	return sessions.FindRef(id);
+}
+
+UEcsactAsyncRunner::UEcsactAsyncRunner() {
+	async_evc = ecsact_async_events_collector{
+		.async_error_callback = ThisClass::OnAsyncErrorRaw,
+		.async_error_callback_user_data = this,
+
+		.system_error_callback = ThisClass::OnExecuteSysErrorRaw,
+		.system_error_callback_user_data = this,
+
+		.async_request_done_callback = ThisClass::OnAsyncRequestDoneRaw,
+		.async_request_done_callback_user_data = this,
+
+		.async_session_event_callback = ThisClass::OnAsyncSessionEventRaw,
+		.async_session_event_callback_user_data = this,
+	};
+}
 
 auto UEcsactAsyncRunner::StreamImpl(
 	ecsact_entity_id    Entity,
@@ -58,64 +66,23 @@ auto UEcsactAsyncRunner::StreamImpl(
 	ecsact_async_stream(SessionId, Entity, ComponentId, ComponentData, nullptr);
 }
 
-auto UEcsactAsyncRunner::Connect( //
-	const char*                ConnectionStr,
-	FAsyncRequestErrorCallback ErrorCallback,
-	FAsyncRequestDoneCallback  Callback
+auto UEcsactAsyncRunner::AsyncSessionStart( //
+	const void* options,
+	int32_t     options_size
 ) -> void {
-	SessionId = ecsact_async_start(ConnectionStr, strlen(ConnectionStr));
+	if(SessionId != ECSACT_INVALID_ID(async_session)) {
+		AsyncSessionStop();
+	}
+
+	SessionId = ecsact_async_start(options, options_size);
 	sessions.Add(SessionId, this);
-	// OnRequestDone(
-	// 	req_id,
-	// 	FAsyncRequestDoneCallback::CreateLambda( //
-	// 		[this, Callback = std::move(Callback)] {
-	// 			Callback.ExecuteIfBound();
-	// 			TriggerGenericConnectCallbacks();
-	// 		}
-	// 	)
-	// );
-	// OnRequestError(
-	// 	req_id,
-	// 	FAsyncRequestErrorCallback::CreateLambda( //
-	// 		[this, ErrorCallback = std::move(ErrorCallback)](ecsact_async_error err)
-	// { 			ErrorCallback.ExecuteIfBound(err);
-	// 		}
-	// 	)
-	// );
 }
 
-auto UEcsactAsyncRunner::Disconnect() -> void {
+auto UEcsactAsyncRunner::AsyncSessionStop() -> void {
 	if(SessionId != ECSACT_INVALID_ID(async_session)) {
 		ecsact_async_stop(SessionId);
-		TriggerGenericConnectCallbacks();
 		sessions.Remove(SessionId);
 		SessionId = ECSACT_INVALID_ID(async_session);
-	}
-}
-
-auto UEcsactAsyncRunner::TriggerGenericConnectCallbacks() -> void {
-	UE_LOG(LogTemp, Log, TEXT("TriggerGenericConnectCallbacks()"));
-	for(auto& cb : GenericConnectCallbacks) {
-		cb.ExecuteIfBound();
-	}
-
-	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
-		if(subsystem) {
-			subsystem->AsyncConnected();
-		}
-	}
-}
-
-auto UEcsactAsyncRunner::TriggerGenericDisconnectCallbacks() -> void {
-	UE_LOG(LogTemp, Log, TEXT("TriggerGenericDisconnectCallbacks()"));
-	for(auto& cb : GenericDisconnectCallbacks) {
-		cb.ExecuteIfBound();
-	}
-
-	for(auto subsystem : GetSubsystemArray<UEcsactRunnerSubsystem>()) {
-		if(subsystem) {
-			subsystem->AsyncDisconnected();
-		}
 	}
 }
 
@@ -127,6 +94,15 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 	void*                    callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+	if(!self) {
+		UE_LOG(
+			Ecsact,
+			Warning,
+			TEXT("Ecsact async session %i could not be found"),
+			session_id
+		);
+		return;
+	}
 	auto request_ids =
 		std::span{request_ids_data, static_cast<size_t>(request_ids_length)};
 
@@ -135,7 +111,7 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 
 		if(cbs && !cbs->IsEmpty()) {
 			for(auto& cb : *cbs) {
-				if(!cb.ExecuteIfBound(async_err)) {
+				if(!cb.ExecuteIfBound(session_id, async_err)) {
 					UE_LOG(
 						Ecsact,
 						Warning,
@@ -144,15 +120,6 @@ auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 					);
 				}
 			}
-		}
-
-		switch(async_err) {
-			case ECSACT_ASYNC_ERR_EXECUTION_MERGE_FAILURE:
-			case ECSACT_ASYNC_ERR_CONNECTION_CLOSED:
-				self->TriggerGenericDisconnectCallbacks();
-				break;
-			default:
-				break;
 		}
 	}
 }
@@ -163,6 +130,15 @@ auto UEcsactAsyncRunner::OnExecuteSysErrorRaw(
 	void*                        callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+	if(!self) {
+		UE_LOG(
+			Ecsact,
+			Warning,
+			TEXT("Ecsact async session %i could not be found"),
+			session_id
+		);
+		return;
+	}
 
 	UE_LOG(LogTemp, Warning, TEXT("System error"));
 }
@@ -174,6 +150,16 @@ auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
 	void*                    callback_user_data
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
+	if(!self) {
+		UE_LOG(
+			Ecsact,
+			Warning,
+			TEXT("Ecsact async session %i could not be found"),
+			session_id
+		);
+		return;
+	}
+
 	auto request_ids =
 		std::span{request_ids_data, static_cast<size_t>(request_ids_length)};
 
@@ -194,6 +180,31 @@ auto UEcsactAsyncRunner::OnAsyncRequestDoneRaw(
 
 			cbs->Empty();
 		}
+	}
+}
+
+auto UEcsactAsyncRunner::OnAsyncSessionEventRaw(
+	ecsact_async_session_id    session_id,
+	ecsact_async_session_event event,
+	void*                      callback_user_data
+) -> void {
+	UE_LOG(LogTemp, Log, TEXT("OnAsyncSessionEventRaw %i %i"), session_id, event);
+	auto self = static_cast<ThisClass*>(callback_user_data);
+	self->AsyncSessionEvent.Broadcast(
+		static_cast<int32_t>(session_id),
+		static_cast<EEcsactAsyncSessionEvent>(event)
+	);
+
+	for(auto subsystem : self->GetSubsystemArray<UEcsactRunnerSubsystem>()) {
+		if(subsystem) {
+			subsystem->AsyncSessionEvent( //
+				static_cast<EEcsactAsyncSessionEvent>(event)
+			);
+		}
+	}
+
+	if(event == ECSACT_ASYNC_SESSION_STOPPED) {
+		sessions.Remove(session_id);
 	}
 }
 
@@ -260,16 +271,4 @@ auto UEcsactAsyncRunner::OnRequestError(
 ) -> void {
 	check(RequestId != ECSACT_INVALID_ID(async_request));
 	RequestErrorCallbacks.FindOrAdd(RequestId).Add(Callback);
-}
-
-auto UEcsactAsyncRunner::OnAsyncSessionStart( //
-	TDelegate<void()> Callback
-) -> void {
-	GenericConnectCallbacks.Add(std::move(Callback));
-}
-
-auto UEcsactAsyncRunner::OnAsyncSessionStop( //
-	TDelegate<void()> Callback
-) -> void {
-	GenericDisconnectCallbacks.Add(std::move(Callback));
 }
