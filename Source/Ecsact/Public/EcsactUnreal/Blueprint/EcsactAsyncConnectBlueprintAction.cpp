@@ -44,19 +44,6 @@ auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
 		ConnectionString.c_str(),
 		static_cast<int32_t>(ConnectionString.size())
 	);
-
-	auto session_id = ecsact_async_start(
-		ConnectionString.c_str(),
-		static_cast<int32_t>(ConnectionString.size())
-	);
-	UE_LOG(Ecsact, Warning, TEXT("async connect session_id=%i"), session_id);
-
-	if(session_id == ECSACT_INVALID_ID(async_session)) {
-		UE_LOG(Ecsact, Error, TEXT("Invalid Session ID"));
-		OnError.Broadcast(EAsyncConnectError::InvalidSessionId);
-		OnDone.Broadcast({});
-		return;
-	}
 }
 
 auto UEcsactAsyncConnectBlueprintAction::OnRequestError( //
