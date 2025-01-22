@@ -13,8 +13,6 @@ auto UEcsactGameInstanceSubsystem::Initialize( //
 	FSubsystemCollectionBase& Collection
 ) -> void {
 	UE_LOG(LogTemp, Log, TEXT("Ecsact Game Instance Initialize"));
-	// RuntimeHandle = ECSACT_LOAD_RUNTIME();
-
 	FWorldDelegates::OnPreWorldInitialization.AddUObject(
 		this,
 		&ThisClass::OnPreWorldInitialization
@@ -36,10 +34,6 @@ auto UEcsactGameInstanceSubsystem::Deinitialize() -> void {
 	if(runner) {
 		StopRunner();
 	}
-
-	// if(RuntimeHandle) {
-	// 	ECSACT_UNLOAD_RUNTIME(RuntimeHandle);
-	// }
 }
 
 auto UEcsactGameInstanceSubsystem::OnPreWorldInitialization(
