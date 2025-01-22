@@ -26,7 +26,7 @@
 #define ECSACT_RUNTIME_INIT() \
 	FOR_EACH_ECSACT_API_FN(ECSACT_API_FN_INIT_, UNUSED_PARAM);
 
-// Check if we're using clangd on windows to shutup the tranditional msvc error
+// Check if we're using clangd on windows to shutup the traditional msvc error
 // TODO: https://github.com/ecsact-dev/ecsact_runtime/issues/267
 #if defined(__clang__) && defined(_WIN32)
 #	define ECSACT_LOAD_RUNTIME()     \
