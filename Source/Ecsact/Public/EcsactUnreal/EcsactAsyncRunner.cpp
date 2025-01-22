@@ -66,6 +66,14 @@ auto UEcsactAsyncRunner::StreamImpl(
 	ecsact_async_stream(SessionId, Entity, ComponentId, ComponentData, nullptr);
 }
 
+auto UEcsactAsyncRunner::Stop() -> void {
+	if(SessionId != ECSACT_INVALID_ID(async_session)) {
+		AsyncSessionStop();
+	}
+
+	Super::Stop();
+}
+
 auto UEcsactAsyncRunner::AsyncSessionStart( //
 	const void* options,
 	int32_t     options_size
@@ -80,7 +88,16 @@ auto UEcsactAsyncRunner::AsyncSessionStart( //
 
 auto UEcsactAsyncRunner::AsyncSessionStop() -> void {
 	if(SessionId != ECSACT_INVALID_ID(async_session)) {
-		ecsact_async_stop(SessionId);
+		if(ecsact_async_stop) {
+			ecsact_async_stop(SessionId);
+		} else {
+			UE_LOG(
+				Ecsact,
+				Error,
+				TEXT("ecsact_async_stop unavailable - unable to stop ecsact async "
+						 "session")
+			);
+		}
 		sessions.Remove(SessionId);
 		SessionId = ECSACT_INVALID_ID(async_session);
 	}

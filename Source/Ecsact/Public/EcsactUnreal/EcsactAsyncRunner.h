@@ -83,6 +83,7 @@ public:
 
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
+	auto Stop() -> void override;
 
 	/**
 	 * Usually execution options are enqueued during `Tick`, but if you'd prefer

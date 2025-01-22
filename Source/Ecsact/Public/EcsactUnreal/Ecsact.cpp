@@ -41,10 +41,12 @@ auto FEcsactModule::Abort() -> void {
 }
 
 auto FEcsactModule::StartupModule() -> void {
+	UE_LOG(Ecsact, Log, TEXT("Ecsact Module Startup"));
 	Self = this;
 }
 
 auto FEcsactModule::ShutdownModule() -> void {
+	UE_LOG(Ecsact, Log, TEXT("Ecsact Module Shutdown"));
 	Self = nullptr;
 }
 
