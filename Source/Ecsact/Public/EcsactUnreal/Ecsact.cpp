@@ -32,7 +32,7 @@ auto FEcsactModule::Get() -> FEcsactModule& {
 }
 
 auto FEcsactModule::Abort() -> void {
-#ifdef WITH_EDITOR
+#if WITH_EDITOR
 	if(GEditor) {
 		GEditor->EndPlayMap();
 		return;

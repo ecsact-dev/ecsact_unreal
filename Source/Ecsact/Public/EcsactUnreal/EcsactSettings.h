@@ -5,14 +5,12 @@
 #include "EcsactUnreal/EcsactRunner.h"
 #include "EcsactSettings.generated.h"
 
-#if WITH_EDITOR
 UENUM()
 enum class EEcsactBuildReportFilter : uint8 {
 	None,
 	ErrorOnly,
 	ErrorsAndWarnings,
 };
-#endif
 
 // clang-format off
 UENUM()
@@ -36,6 +34,8 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Build")
 	bool bEnableBuild = false;
 
+#endif
+
 	/**
 	 * This path is used when not using the built-in ecsact recipe build system.
 	 * (i.e. bEnableBuild is false)
@@ -50,6 +50,8 @@ public:
 		)
 	)
 	FString CustomEcsactRuntimeLibraryPath;
+
+#if WITH_EDITORONLY_DATA
 
 	UPROPERTY(
 		EditAnywhere,
@@ -73,13 +75,12 @@ public:
 	)
 	TArray<FString> Recipes;
 
-	auto GetDefaultEcsactRuntimeLibraryPath() const -> FString;
-
-	auto GetEcsactRuntimeLibraryPath() const -> FString;
-
 	auto GetValidRecipes() const -> TArray<FString>;
 
-#endif
+#endif // WITH_EDITORONLY_DATA
+
+	auto GetEcsactRuntimeLibraryPath() const -> FString;
+	auto GetDefaultEcsactRuntimeLibraryPath() const -> FString;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Runtime")
 	EEcsactRuntimeRunnerType Runner;

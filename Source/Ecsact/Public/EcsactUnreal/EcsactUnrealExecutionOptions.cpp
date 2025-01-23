@@ -42,7 +42,7 @@ auto UEcsactUnrealExecutionOptions::Clear() -> void {
 	ExecOpts = {};
 }
 
-#ifdef WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA
 auto UEcsactUnrealExecutionOptions::DebugLog() const -> void {
 	if(!IsNotEmpty()) {
 		UE_LOG(Ecsact, Warning, TEXT("(Empty Ecsact Execution Options)"));
