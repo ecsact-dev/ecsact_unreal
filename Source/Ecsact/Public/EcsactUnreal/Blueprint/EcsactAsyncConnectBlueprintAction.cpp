@@ -6,9 +6,11 @@
 #include "EcsactUnreal/Ecsact.h"
 
 auto UEcsactAsyncConnectBlueprintAction::AsyncConnect( //
+	const UObject* WorldContext,
 	const FString& ConnectionString
 ) -> UEcsactAsyncConnectBlueprintAction* {
 	auto action = NewObject<UEcsactAsyncConnectBlueprintAction>();
+	action->World = WorldContext->GetWorld();
 	action->Utf8ConnectionString = TCHAR_TO_UTF8(*ConnectionString);
 	return action;
 }
@@ -20,8 +22,7 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
 	std::string ConnectionString
 ) -> void {
-	UE_LOG(Ecsact, Warning, TEXT("AsyncConnectActivate()"));
-	auto runner = EcsactUnrealExecution::Runner(GetWorld());
+	auto runner = EcsactUnrealExecution::Runner(World);
 	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
 	if(!async_runner) {
 		UE_LOG(
@@ -64,7 +65,7 @@ auto UEcsactAsyncConnectBlueprintAction::OnAsyncSessionEvent( //
 	int32                    SessionId,
 	EEcsactAsyncSessionEvent Event
 ) -> void {
-	auto runner = EcsactUnrealExecution::Runner(GetWorld());
+	auto runner = EcsactUnrealExecution::Runner(World);
 	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
 
 	if(async_runner) {

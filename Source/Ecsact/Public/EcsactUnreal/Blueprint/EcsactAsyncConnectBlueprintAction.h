@@ -25,6 +25,7 @@ class ECSACT_API UEcsactAsyncConnectBlueprintAction
 	: public UBlueprintAsyncActionBase {
 	GENERATED_BODY() // NOLINT
 
+	UWorld*     World = nullptr;
 	std::string Utf8ConnectionString;
 	bool        bConnectFailed = false;
 
@@ -47,9 +48,10 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "Ecsact Runtime",
-		Meta = (BlueprintInternalUseOnly = true)
+		Meta = (BlueprintInternalUseOnly = true, WorldContext = "WorldContext")
 	)
 	static UEcsactAsyncConnectBlueprintAction* AsyncConnect(
+		const UObject* WorldContext,
 		const FString& ConnectionString
 	);
 
