@@ -22,7 +22,7 @@ auto UEcsactAsyncConnectBlueprintAction::Activate() -> void {
 auto UEcsactAsyncConnectBlueprintAction::ConnectRequest(
 	std::string ConnectionString
 ) -> void {
-	auto runner = EcsactUnrealExecution::Runner(World);
+	auto runner = EcsactUnrealExecution::Runner(GetWorld());
 	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
 	if(!async_runner) {
 		UE_LOG(
@@ -65,7 +65,7 @@ auto UEcsactAsyncConnectBlueprintAction::OnAsyncSessionEvent( //
 	int32                    SessionId,
 	EEcsactAsyncSessionEvent Event
 ) -> void {
-	auto runner = EcsactUnrealExecution::Runner(World);
+	auto runner = EcsactUnrealExecution::Runner(GetWorld());
 	auto async_runner = Cast<UEcsactAsyncRunner>(runner);
 
 	if(async_runner) {
@@ -83,4 +83,8 @@ auto UEcsactAsyncConnectBlueprintAction::OnAsyncSessionEvent( //
 				break;
 		}
 	}
+}
+
+auto UEcsactAsyncConnectBlueprintAction::GetWorld() const -> UWorld* {
+	return World;
 }

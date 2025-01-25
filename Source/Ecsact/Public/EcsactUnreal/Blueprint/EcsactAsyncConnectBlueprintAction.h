@@ -75,6 +75,8 @@ public:
 
 	auto Activate() -> void override;
 
+	auto GetWorld() const -> UWorld* override;
+
 protected:
 	auto ConnectRequest(std::string ConnectionString) -> void;
 	auto OnAsyncSessionEvent( //
