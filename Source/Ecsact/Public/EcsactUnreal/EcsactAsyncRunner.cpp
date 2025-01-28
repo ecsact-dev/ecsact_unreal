@@ -103,6 +103,18 @@ auto UEcsactAsyncRunner::AsyncSessionStop() -> void {
 	}
 }
 
+auto UEcsactAsyncRunner::GetAsyncSessionTick() const -> int32 {
+	if(SessionId != ECSACT_INVALID_ID(async_session)) {
+		if(ecsact_async_get_current_tick) {
+			return ecsact_async_get_current_tick(SessionId);
+		} else {
+			UE_LOG(Ecsact, Error, TEXT("ecsact_async_get_current_tick unavailable"));
+		}
+	}
+
+	return 0;
+}
+
 auto UEcsactAsyncRunner::OnAsyncErrorRaw(
 	ecsact_async_session_id  session_id,
 	ecsact_async_error       async_err,

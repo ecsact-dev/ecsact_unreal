@@ -102,6 +102,11 @@ public:
 	 */
 	auto AsyncSessionStop() -> void;
 
+	/**
+	 * Wrapper around `ecsact_async_get_current_tick`
+	 */
+	auto GetAsyncSessionTick() const -> int32;
+
 	auto OnRequestDone(
 		ecsact_async_request_id   RequestId,
 		FAsyncRequestDoneCallback Callback
