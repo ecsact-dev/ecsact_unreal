@@ -24,8 +24,6 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 		return;
 	}
 
-	EcsactUnrealExecution::DeltaTime_ = DeltaTime;
-
 	if(registry_id == ECSACT_INVALID_ID(registry)) {
 		if(ecsact_create_registry) {
 			UE_LOG(

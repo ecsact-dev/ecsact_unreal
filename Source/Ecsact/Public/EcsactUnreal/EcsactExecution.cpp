@@ -4,12 +4,6 @@
 #include "EcsactGameInstanceSubsystem.h"
 #include "Engine/GameInstance.h"
 
-float EcsactUnrealExecution::DeltaTime_ = 0.f;
-
-auto EcsactUnrealExecution::DeltaTime() -> float {
-	return DeltaTime_;
-}
-
 auto EcsactUnrealExecution::Runner( //
 	class UWorld* World
 ) -> TWeakObjectPtr<class UEcsactRunner> {
