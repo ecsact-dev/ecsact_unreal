@@ -3,6 +3,7 @@
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "EcsactUnreal/EcsactExecution.h"
 #include "ecsact/runtime/core.h"
+#include "ecsact/wasm.h"
 
 auto UEcsactSyncRunner::StreamImpl(
 	ecsact_entity_id    Entity,
@@ -67,6 +68,31 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 				TEXT("ecsact_execute_systems unavailable - unable to execute systems")
 			);
 		}
+	}
+
+	if(ecsactsi_wasm_consume_logs != nullptr) {
+		ecsactsi_wasm_consume_logs(
+			[](
+				ecsactsi_wasm_log_level log_level,
+				const char*             message,
+				int32_t                 message_length,
+				void*                   user_data
+			) {
+				switch(log_level) {
+					default:
+					case ECSACTSI_WASM_LOG_LEVEL_INFO:
+						UE_LOG(Ecsact, Log, TEXT("%.*hs"), message_length, message);
+						break;
+					case ECSACTSI_WASM_LOG_LEVEL_WARNING:
+						UE_LOG(Ecsact, Warning, TEXT("%.*hs"), message_length, message);
+						break;
+					case ECSACTSI_WASM_LOG_LEVEL_ERROR:
+						UE_LOG(Ecsact, Error, TEXT("%.*hs"), message_length, message);
+						break;
+				}
+			},
+			nullptr
+		);
 	}
 }
 
