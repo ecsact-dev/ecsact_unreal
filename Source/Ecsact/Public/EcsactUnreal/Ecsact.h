@@ -6,7 +6,7 @@
 #include "UObject/WeakObjectPtr.h"
 #include "EcsactUnreal/RuntimeHandle.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(Ecsact, Log, All);
+ECSACT_API DECLARE_LOG_CATEGORY_EXTERN(Ecsact, Log, All);
 
 namespace EcsactUnreal::Detail {
 auto CheckRuntimeNotLoaded(FEcsactModule&) -> bool;

@@ -11,6 +11,9 @@ UCLASS(NotBlueprintable)
 
 class ECSACT_API UEcsactSyncRunner : public UEcsactRunner {
 	GENERATED_BODY() // NOLINT
+
+	float LastTickTime = 0.f;
+
 protected:
 	auto StreamImpl(
 		ecsact_entity_id    Entity,

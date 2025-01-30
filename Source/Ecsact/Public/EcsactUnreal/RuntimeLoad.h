@@ -3,6 +3,7 @@
 #include "EcsactUnreal/Ecsact.h"
 #include "EcsactUnreal/RuntimeHandle.h"
 #include "ecsact/runtime.h"
+#include "ecsact/wasm.h"
 
 /** @internal - DO NOT USE */
 #define ECSACT_API_FN_INIT_(fn, UNUSED_PARAM) decltype(fn) fn = nullptr
@@ -19,12 +20,6 @@
 		UE_LOG(Ecsact, Log, TEXT("loaded %s"), TEXT(#fn));                    \
 	}                                                                       \
 	static_assert(true, "require ;")
-
-/**
- * Call exactly once in your game modules .cpp file.
- */
-#define ECSACT_RUNTIME_INIT() \
-	FOR_EACH_ECSACT_API_FN(ECSACT_API_FN_INIT_, UNUSED_PARAM);
 
 // Check if we're using clangd on windows to shutup the traditional msvc error
 // TODO: https://github.com/ecsact-dev/ecsact_runtime/issues/267
@@ -70,6 +65,7 @@
 				return {};                                                         \
 			}                                                                    \
 			FOR_EACH_ECSACT_API_FN(ECSACTAPI_FN_FN_LOAD_);                       \
+			FOR_EACH_ECSACTSI_WASM_API_FN(ECSACTAPI_FN_FN_LOAD_);                \
 			return result;                                                       \
 		})()
 
@@ -84,6 +80,7 @@
 			}                                                             \
 			EcsactUnreal::Detail::UnloadPostDisconnect(module, Handle_);  \
 			FOR_EACH_ECSACT_API_FN(ECSACT_API_FN_RESET_);                 \
+			FOR_EACH_ECSACTSI_WASM_API_FN(ECSACT_API_FN_RESET_);          \
 			EcsactUnreal::Detail::UnloadPostReset(module, Handle_);       \
 		})(Handle)
 

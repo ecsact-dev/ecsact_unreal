@@ -7,6 +7,7 @@
 #include "Misc/Paths.h"
 #include "EcsactUnreal/EcsactAsyncRunner.h"
 #include "ecsact/runtime.h"
+#include "ecsact/wasm.h"
 #include "Engine/World.h"
 
 #define LOCTEXT_NAMESPACE "FEcsactModule"
@@ -15,6 +16,7 @@ DEFINE_LOG_CATEGORY(Ecsact);
 
 #define INIT_ECSACT_API_FN(fn, UNUSED_PARAM) decltype(fn) fn = nullptr
 FOR_EACH_ECSACT_API_FN(INIT_ECSACT_API_FN, UNUSED_PARAM);
+FOR_EACH_ECSACTSI_WASM_API_FN(INIT_ECSACT_API_FN, UNUSED_PARAM);
 #undef INIT_ECSACT_API_FN
 
 FEcsactModule* FEcsactModule::Self = nullptr;

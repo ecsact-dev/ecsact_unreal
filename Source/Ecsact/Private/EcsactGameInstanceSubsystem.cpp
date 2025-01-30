@@ -126,3 +126,12 @@ auto UEcsactGameInstanceSubsystem::StopRunner() -> void {
 	runner->Stop();
 	Runner.Reset();
 }
+
+auto UEcsactGameInstanceSubsystem::CanStartCustomRunner() const -> bool {
+	const auto* settings = GetDefault<UEcsactSettings>();
+	if(settings->Runner == EEcsactRuntimeRunnerType::Custom) {
+		return !settings->CustomRunnerClass;
+	}
+
+	return false;
+}
