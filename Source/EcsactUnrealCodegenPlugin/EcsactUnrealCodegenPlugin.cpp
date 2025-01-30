@@ -240,11 +240,45 @@ static auto print_ustruct(ecsact::codegen_plugin_context& ctx, auto in_compo_id)
 	ctx.writef(";\n\n");
 }
 
+static auto print_ecsact_unreal_package_meta( //
+	std::string_view                prefix,
+	ecsact::codegen_plugin_context& ctx
+) -> void {
+	auto system_like_ids = ecsact::meta::get_all_system_like_ids(ctx.package_id);
+	ctx.writef(
+		"constexpr auto {}SystemLikeIds = "
+		"std::array<ecsact_system_like_id, {}>{{\n",
+		prefix,
+		system_like_ids.size()
+	);
+	for(auto id : system_like_ids) {
+		ctx.writef(
+			"\tstatic_cast<ecsact_system_like_id>({} /* {} */),\n",
+			static_cast<int>(id),
+			ecsact::meta::decl_full_name(id)
+		);
+	}
+	ctx.writef("}};\n\n");
+
+	ctx.writef(
+		"constexpr auto {}ExportNames = "
+		"std::array<const char*, {}>{{\n",
+		prefix,
+		system_like_ids.size()
+	);
+	for(auto id : system_like_ids) {
+		ctx.writef("\t\"{}\",\n", c_identifier(ecsact::meta::decl_full_name(id)));
+	}
+	ctx.writef("}};\n");
+}
+
 static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	ctx.writef("#pragma once\n\n");
 
 	inc_header(ctx, "CoreMinimal.h");
 	inc_header(ctx, "UObject/Interface.h");
+	ctx.writef("#include <array>\n");
+	inc_header(ctx, "ecsact/runtime/common.h");
 	inc_header(ctx, "EcsactUnreal/EcsactRunnerSubsystem.h");
 	inc_package_header(ctx, ctx.package_id, ".hh");
 	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.generated.h");
@@ -252,6 +286,11 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	auto prefix =
 		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
 
+	ctx.writef("\n\n");
+
+	block(ctx, "namespace EcsactUnreal::CodegenMeta", [&] {
+		print_ecsact_unreal_package_meta(prefix, ctx);
+	});
 	ctx.writef("\n\n");
 
 	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
