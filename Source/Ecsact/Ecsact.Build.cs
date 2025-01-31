@@ -16,6 +16,7 @@ public class EcsactSdkNotFound : Exception {
 	}
 }
 
+
 public class Ecsact : ModuleRules {
 	public Ecsact(ReadOnlyTargetRules Target) : base(Target) {
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
@@ -34,6 +35,7 @@ public class Ecsact : ModuleRules {
 		DynamicallyLoadedModuleNames.AddRange(new string[] {
 			"EcsactUnrealCodegenPlugin",
 		});
+		//
 
 		var EcsactUnrealCodegenPluginPath = Path.Combine(
 			ModuleDirectory,
