@@ -129,6 +129,30 @@ static auto ecsact_type_to_unreal_type(
 	return "";
 }
 
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"));\n", text);
+}
+
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text,
+	auto&&                          v1
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"), {});\n", text, v1);
+}
+
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text,
+	auto&&                          v1,
+	auto&&                          v2
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"), {}, {});\n", text, v1, v2);
+}
+
 static auto ecsact_type_to_unreal_type(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_field_type               type
@@ -985,16 +1009,31 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 							ctx,
 							std::format(
 								"entity_manager.Defer().PushCommand<FMassDeferredSetCommand>(["
+								"this, "
+								"Entity, "
 								"entity_handle, {}](FMassEntityManager& entity_manager)\n",
 								comp_pascal_name
 							),
 							[&] {
 								ctx.writef(
-									"entity_manager.GetFragmentDataPtr<{}>(entity_handle)->"
-									"component = {};",
-									comp_fragment_name,
-									comp_pascal_name
+									"auto fragment = "
+									"entity_manager.GetFragmentDataPtr<{}>(entity_handle);\n",
+									comp_fragment_name
 								);
+								block(ctx, "if(!fragment)", [&] {
+									print_ue_warning(
+										ctx,
+										std::format(
+											"%s fragment {} does not exist for entity %i",
+											comp_fragment_name
+										),
+										"*GetClass()->GetName()",
+										"Entity"
+									);
+									ctx.writef("return;");
+								});
+								ctx.writef("\n");
+								ctx.writef("fragment->component = {};\n", comp_pascal_name);
 							}
 						);
 						ctx.writef(");\n");
@@ -1072,10 +1111,10 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 			ctx.writef("check(world);\n\n");
 			ctx.writef("auto* config = GetEntityMassConfig();\n");
 			block(ctx, "if(!config)", [&] {
-				ctx.writef(
-					"\tUE_LOG(Ecsact, Warning, TEXT(\"{}::GetEntityMassConfig() returned "
-					"null\"));\n",
-					one_to_one_spawner_name
+				print_ue_warning(
+					ctx,
+					"%s GetEntityMassConfig() returned null",
+					"*GetClass()->GetName()"
 				);
 				ctx.writef("return;");
 			});
