@@ -17,6 +17,8 @@ using ecsact::cpp_codegen_plugin_util::inc_package_header;
 
 constexpr int32_t GENERATED_HEADER_INDEX = 0;
 constexpr int32_t GENERATED_SOURCE_INDEX = 1;
+constexpr int32_t GENERATED_MASS_HEADER_INDEX = 2;
+constexpr int32_t GENERATED_MASS_SOURCE_INDEX = 3;
 
 inline auto inc_package_header_no_ext( //
 	ecsact::codegen_plugin_context& ctx,
@@ -81,6 +83,8 @@ auto ecsact_codegen_output_filenames( //
 		std::array{
 			pkg_basename + "__ecsact__ue.h"s, // GENERATED_HEADER_INDEX
 			pkg_basename + "__ecsact__ue.cpp"s, // GENERATED_SOURCE_INDEX
+			pkg_basename + "__ecsact__mass__ue.h"s, // GENERATED_MASS_HEADER_INDEX
+			pkg_basename + "__ecsact__mass__ue.cpp"s, // GENERATED_MASS_SOURCE_INDEX
 		},
 		out_filenames,
 		max_filenames,
@@ -125,6 +129,30 @@ static auto ecsact_type_to_unreal_type(
 	return "";
 }
 
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"));\n", text);
+}
+
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text,
+	auto&&                          v1
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"), {});\n", text, v1);
+}
+
+static auto print_ue_warning(
+	ecsact::codegen_plugin_context& ctx,
+	std::string_view                text,
+	auto&&                          v1,
+	auto&&                          v2
+) -> void {
+	ctx.writef("UE_LOG(Ecsact, Warning, TEXT(\"{}\"), {}, {});\n", text, v1, v2);
+}
+
 static auto ecsact_type_to_unreal_type(
 	ecsact::codegen_plugin_context& ctx,
 	ecsact_field_type               type
@@ -153,6 +181,21 @@ static auto ecsact_type_to_unreal_type(
 	}
 
 	return "";
+}
+
+static auto package_pascal_to_mass_spawner(std::string package_pascal_name) {
+	return std::format("U{}MassSpawner", package_pascal_name);
+}
+
+static auto package_pascal_to_one_to_one(std::string package_pascal_name) {
+	return std::format("UOneToOne{}MassSpawner", package_pascal_name);
+}
+
+static auto to_comp_fragment_name(
+	std::string package_pascal_name,
+	std::string comp_pascal_name
+) {
+	return std::format("F{}{}Fragment", package_pascal_name, comp_pascal_name);
 }
 
 static auto ecsact_ustruct_name(auto decl_id) -> std::string {
@@ -279,17 +322,18 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	inc_header(ctx, "UObject/Interface.h");
 	ctx.writef("#include <array>\n");
 	inc_header(ctx, "ecsact/runtime/common.h");
+	inc_header(ctx, "EcsactUnreal/Ecsact.h");
 	inc_header(ctx, "EcsactUnreal/EcsactRunnerSubsystem.h");
 	inc_package_header(ctx, ctx.package_id, ".hh");
 	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.generated.h");
 
-	auto prefix =
+	auto package_pascal_name =
 		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
 
 	ctx.writef("\n\n");
 
 	block(ctx, "namespace EcsactUnreal::CodegenMeta", [&] {
-		print_ecsact_unreal_package_meta(prefix, ctx);
+		print_ecsact_unreal_package_meta(package_pascal_name, ctx);
 	});
 	ctx.writef("\n\n");
 
@@ -306,7 +350,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 		ctx,
 		std::format(
 			"class U{}EcsactRunnerSubsystem : public UEcsactRunnerSubsystem",
-			prefix
+			package_pascal_name
 		),
 		[&] {
 			ctx.writef("GENERATED_BODY() // NOLINT\n\n");
@@ -360,7 +404,9 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 			ctx.indentation += 1;
 			ctx.writef("\n");
 
-			ctx.write(std::format("U{}EcsactRunnerSubsystem();\n", prefix));
+			ctx.write(
+				std::format("U{}EcsactRunnerSubsystem();\n", package_pascal_name)
+			);
 
 			for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
 				auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
@@ -682,6 +728,500 @@ static auto generate_source(ecsact::codegen_plugin_context ctx) -> void {
 	}
 }
 
+static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
+	using ecsact::cpp_codegen_plugin_util::block;
+	using ecsact::cpp_codegen_plugin_util::inc_header;
+
+	ctx.writef("#pragma once\n\n");
+
+	inc_header(ctx, "CoreMinimal.h");
+	inc_header(ctx, "MassEntityTypes.h");
+	inc_header(ctx, "MassEntityConfigAsset.h");
+	inc_header(ctx, "ecsact/runtime/common.h");
+
+	auto pkg_basename = //
+		ecsact::meta::package_file_path(ctx.package_id)
+			.filename()
+			.replace_extension("")
+			.string();
+	auto ecsact_header = pkg_basename + "__ecsact__ue.h"s;
+
+	inc_header(ctx, ecsact_header);
+	inc_package_header(ctx, ctx.package_id, ".hh");
+	inc_package_header_no_ext(
+		ctx,
+		ctx.package_id,
+		"__ecsact__mass__ue.generated.h"
+	);
+
+	ctx.writef("\n");
+
+	auto package_pascal_name =
+		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
+
+	auto mass_spawner_name = package_pascal_to_mass_spawner(package_pascal_name);
+	auto one_to_one_spawner_name =
+		package_pascal_to_one_to_one(package_pascal_name);
+
+	ctx.writef("USTRUCT()\n");
+	block(ctx, "struct FEcsactEntityFragment : public FMassFragment", [&] {
+		ctx.writef("GENERATED_BODY()\n");
+		ctx.writef("FEcsactEntityFragment() = default;\n");
+		ctx.writef(
+			"FEcsactEntityFragment(const ecsact_entity_id EntityId) : "
+			"id(EntityId) "
+			"{{}}\n\n"
+		);
+
+		block(ctx, "ecsact_entity_id GetId() const", [&] {
+			ctx.writef("return id;\n");
+		});
+		ctx.writef("\n");
+		ctx.writef("private:\n");
+		ctx.writef("ecsact_entity_id id;");
+	});
+	ctx.writef(";\n");
+
+	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+		auto comp_type_cpp_name = cpp_identifier(comp_full_name);
+		auto comp_name = ecsact::meta::component_name(comp_id);
+		auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
+		auto comp_ustruct_name = ecsact_ustruct_name(comp_id);
+		auto comp_fragment_name =
+			to_comp_fragment_name(package_pascal_name, comp_pascal_name);
+
+		auto fields = ecsact::meta::get_field_ids(comp_id);
+
+		ctx.writef("USTRUCT()\n");
+		if(fields.size() > 0) {
+			block(
+				ctx,
+				std::format("struct {} : public FMassFragment", comp_fragment_name),
+				[&] {
+					ctx.writef("GENERATED_BODY()\n\n");
+					ctx.writef("{}() = default;\n", comp_fragment_name);
+					ctx.writef(
+						"{}({} in_component) : component(in_component){{}}\n\n",
+						comp_fragment_name,
+						comp_ustruct_name
+					);
+					ctx.writef("{} component;", comp_ustruct_name);
+				}
+			);
+		} else {
+			block(
+				ctx,
+				std::format("struct {} : public FMassTag", comp_fragment_name),
+				[&] { ctx.writef("GENERATED_BODY()\n"); }
+			);
+		}
+		ctx.writef(";\n");
+	}
+
+	ctx.writef("\n");
+
+	ctx.writef("UCLASS(Abstract)\n");
+	block(
+		ctx,
+		std::format(
+			"class {} : public U{}EcsactRunnerSubsystem",
+			mass_spawner_name,
+			package_pascal_name
+		),
+		[&] {
+			ctx.writef("GENERATED_BODY()\n\n");
+			ctx.write("public:\n");
+			ctx.writef(
+				"virtual auto GetEcsactMassEntityHandles(int32 Entity) -> "
+				"TArray<FMassEntityHandle>;\n"
+			);
+
+			for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+				auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+				auto comp_type_cpp_name = cpp_identifier(comp_full_name);
+				auto comp_name = ecsact::meta::component_name(comp_id);
+				auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
+				auto comp_ustruct_name = ecsact_ustruct_name(comp_id);
+
+				auto fields = ecsact::meta::get_field_ids(comp_id);
+
+				ctx.writef(
+					"void Init{0}_Implementation(int32 "
+					"Entity, "
+					"{1} {0}) override;\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				);
+
+				if(fields.size() > 0) {
+					ctx.writef(
+						"void Update{0}_Implementation(int32 "
+						"Entity, "
+						"{1} {0}) override;\n",
+						comp_pascal_name,
+						comp_ustruct_name
+					);
+				}
+
+				ctx.writef(
+					"void Remove{0}_Implementation(int32 "
+					"Entity, "
+					"{1} {0}) override;\n",
+					comp_pascal_name,
+					comp_ustruct_name
+				);
+			}
+		}
+	);
+	// "(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
+	ctx.writef(";\n\n");
+	ctx.writef("UCLASS(Abstract)\n");
+	block(
+		ctx,
+		std::format(
+			"class {} : public {}",
+			one_to_one_spawner_name,
+			mass_spawner_name
+		),
+		[&] {
+			ctx.writef("GENERATED_BODY()\n\n");
+
+			ctx.writef(
+				"TMap<ecsact_entity_id, TArray<FMassEntityHandle>> MassEntities;\n"
+			);
+			ctx.writef("protected:\n");
+
+			ctx.writef("UPROPERTY(EditAnywhere)\n");
+			ctx.writef("UMassEntityConfigAsset* MassEntityConfigAsset;\n");
+
+			ctx.writef(
+				"auto EntityCreated_Implementation(int32 Entity) -> void override;\n"
+			);
+
+			ctx.writef(
+				"auto EntityDestroyed_Implementation(int32 Entity) -> void override;\n"
+			);
+
+			ctx.writef(
+				"auto GetEcsactMassEntityHandles(int32 Entity) -> "
+				"TArray<FMassEntityHandle> override;\n"
+			);
+
+			ctx.writef(
+				"virtual auto GetEntityMassConfig() const -> UMassEntityConfigAsset*;\n"
+			);
+		}
+	);
+	ctx.writef(";\n");
+}
+
+static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
+	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__mass__ue.h");
+	inc_header(ctx, "Engine/World.h");
+	inc_header(ctx, "MassEntitySubsystem.h");
+	inc_header(ctx, "MassSpawnerSubsystem.h");
+	inc_header(ctx, "MassCommandBuffer.h");
+	ctx.writef("\n");
+
+	auto package_pascal_name =
+		ecsact_decl_name_to_pascal(ecsact::meta::package_name(ctx.package_id));
+
+	auto mass_spawner_name = package_pascal_to_mass_spawner(package_pascal_name);
+	auto one_to_one_spawner_name =
+		package_pascal_to_one_to_one(package_pascal_name);
+
+	for(auto comp_id : ecsact::meta::get_component_ids(ctx.package_id)) {
+		auto comp_full_name = ecsact::meta::decl_full_name(comp_id);
+		auto comp_type_cpp_name = cpp_identifier(comp_full_name);
+		auto comp_name = ecsact::meta::component_name(comp_id);
+		auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
+		auto comp_ustruct_name = ecsact_ustruct_name(comp_id);
+		auto comp_fragment_name =
+			to_comp_fragment_name(package_pascal_name, comp_pascal_name);
+
+		auto fields = ecsact::meta::get_field_ids(comp_id);
+		block(
+			ctx,
+			std::format(
+				"void {2}::Init{0}_Implementation(int32 "
+				"Entity, "
+				"{1} {0})\n",
+				comp_pascal_name,
+				comp_ustruct_name,
+				mass_spawner_name
+			),
+			[&] {
+				ctx.writef("auto* world = GetWorld();\n");
+				ctx.writef("check(world);\n\n");
+				ctx.writef(
+					"auto& entity_manager = "
+					"world->GetSubsystem<UMassEntitySubsystem>()->"
+					"GetMutableEntityManager();\n"
+				);
+				ctx.writef("auto entity_handles = GetEcsactMassEntityHandles(Entity);\n"
+				);
+
+				block(ctx, "for(auto entity_handle : entity_handles)", [&] {
+					if(fields.size() > 0) {
+						ctx.writef(
+							"entity_manager.Defer().AddFragment<{}>(entity_handle);\n",
+							comp_fragment_name
+						);
+						ctx.writef(
+							"entity_manager.Defer().PushCommand<"
+							"FMassCommandAddFragmentInstances>(entity_handle, {}{{{}}});\n",
+							comp_fragment_name,
+							comp_pascal_name
+						);
+					} else {
+						ctx.writef(
+							"entity_manager.Defer().AddTag<{}>(entity_handle);\n",
+							comp_fragment_name
+						);
+					}
+				});
+			}
+		);
+		ctx.writef("\n");
+
+		if(fields.size() > 0) {
+			block(
+				ctx,
+				std::format(
+					"void {2}::Update{0}_Implementation(int32 "
+					"Entity, "
+					"{1} {0})\n",
+					comp_pascal_name,
+					comp_ustruct_name,
+					mass_spawner_name
+				),
+				[&] {
+					ctx.writef("auto* world = GetWorld();\n");
+					ctx.writef("check(world);\n\n");
+					ctx.writef(
+						"auto& entity_manager = "
+						"world->GetSubsystem<UMassEntitySubsystem>()->"
+						"GetMutableEntityManager();\n"
+					);
+					ctx.writef(
+						"auto entity_handles = GetEcsactMassEntityHandles(Entity);\n"
+					);
+
+					block(ctx, "for(auto entity_handle : entity_handles)", [&] {
+						block(
+							ctx,
+							std::format(
+								"entity_manager.Defer().PushCommand<FMassDeferredSetCommand>(["
+								"this, "
+								"Entity, "
+								"entity_handle, {}](FMassEntityManager& entity_manager)\n",
+								comp_pascal_name
+							),
+							[&] {
+								ctx.writef(
+									"auto fragment = "
+									"entity_manager.GetFragmentDataPtr<{}>(entity_handle);\n",
+									comp_fragment_name
+								);
+								block(ctx, "if(!fragment)", [&] {
+									print_ue_warning(
+										ctx,
+										std::format(
+											"%s fragment {} does not exist for entity %i",
+											comp_fragment_name
+										),
+										"*GetClass()->GetName()",
+										"Entity"
+									);
+									ctx.writef("return;");
+								});
+								ctx.writef("\n");
+								ctx.writef("fragment->component = {};\n", comp_pascal_name);
+							}
+						);
+						ctx.writef(");\n");
+					});
+				}
+			);
+			ctx.writef("\n");
+		}
+
+		block(
+			ctx,
+			std::format(
+				"void {2}::Remove{0}_Implementation(int32 "
+				"Entity, "
+				"{1} {0})\n",
+				comp_pascal_name,
+				comp_ustruct_name,
+				mass_spawner_name
+			),
+			[&] {
+				ctx.writef("auto* world = GetWorld();\n");
+				ctx.writef("check(world);\n\n");
+				ctx.writef(
+					"auto& entity_manager = "
+					"world->GetSubsystem<UMassEntitySubsystem>()->"
+					"GetMutableEntityManager();\n"
+				);
+				ctx.writef("auto entity_handles = GetEcsactMassEntityHandles(Entity);\n"
+				);
+
+				block(ctx, "for(auto entity_handle : entity_handles)", [&] {
+					if(fields.size() > 0) {
+						ctx.writef(
+							"entity_manager.Defer().RemoveFragment<{}>(entity_handle);\n",
+							comp_fragment_name
+						);
+					} else {
+						ctx.writef(
+							"entity_manager.Defer().RemoveTag<{}>(entity_handle);\n",
+							comp_fragment_name
+						);
+					}
+				});
+			}
+		);
+		ctx.writef("\n");
+	}
+
+	block(
+		ctx,
+		std::format(
+			"auto {}::GetEcsactMassEntityHandles(int32 "
+			"Entity) -> TArray<FMassEntityHandle>",
+			mass_spawner_name
+		),
+		[&] {
+			ctx.writef(
+				"UE_LOG(LogTemp, Error, TEXT(\"GetEcsactMassEntityHandless must be "
+				"implemented for "
+				"EcsactMassEntitySpawner\"));\n"
+			);
+			ctx.writef("return TArray<FMassEntityHandle>{{}};\n");
+		}
+	);
+	ctx.writef("\n");
+
+	block(
+		ctx,
+		std::format(
+			"auto {}::EntityCreated_Implementation(int32 Entity) -> void",
+			one_to_one_spawner_name
+		),
+		[&] {
+			ctx.writef("auto* world = GetWorld();\n");
+			ctx.writef("check(world);\n\n");
+			ctx.writef("auto* config = GetEntityMassConfig();\n");
+			block(ctx, "if(!config)", [&] {
+				print_ue_warning(
+					ctx,
+					"%s GetEntityMassConfig() returned null",
+					"*GetClass()->GetName()"
+				);
+				ctx.writef("return;");
+			});
+			ctx.writef("\n");
+			ctx.writef(
+				"const auto& entity_template = "
+				"config->GetOrCreateEntityTemplate(*world);\n"
+			);
+
+			ctx.writef("auto new_entity_handles = TArray<FMassEntityHandle>{{}};\n\n"
+			);
+
+			ctx.writef(
+				"auto  mass_spawner = world->GetSubsystem<UMassSpawnerSubsystem>();\n"
+			);
+			ctx.writef(
+				"auto& entity_manager = "
+				"world->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager()"
+				";\n\n"
+			);
+
+			ctx.writef(
+				"mass_spawner->SpawnEntities(entity_template, 1, new_entity_handles);\n"
+			);
+
+			ctx.writef(
+				"MassEntities.Add(static_cast<ecsact_entity_id>(Entity), "
+				"new_entity_handles);\n"
+			);
+
+			block(ctx, "for(auto entity_handle : new_entity_handles)", [&] {
+				ctx.writef(
+					"entity_manager.Defer().AddFragment<FEcsactEntityFragment>(entity_"
+					"handle);\n"
+				);
+				ctx.writef(
+					"entity_manager.Defer().PushCommand<FMassCommandAddFragmentInstances>"
+					"(entity_handle, "
+					"FEcsactEntityFragment{{static_cast<ecsact_entity_id>(Entity)}});"
+					"\n"
+				);
+				ctx.writef(";\n");
+			});
+		}
+	);
+
+	block(
+		ctx,
+		std::format(
+			"auto {}::EntityDestroyed_Implementation(int32 Entity) -> "
+			"void",
+			one_to_one_spawner_name
+		),
+		[&] {
+			ctx.writef("auto* world = GetWorld();\n");
+			ctx.writef("check(world);\n\n");
+			ctx.writef(
+				"auto& entity_manager = "
+				"world->GetSubsystem<UMassEntitySubsystem>()->GetMutableEntityManager()"
+				";\n\n"
+			);
+
+			ctx.writef("auto old_entity_handles = TArray<FMassEntityHandle>{{}};\n");
+			ctx.writef(
+				"MassEntities.RemoveAndCopyValue(static_cast<ecsact_entity_id>(Entity),"
+				"old_entity_handles);\n"
+			);
+
+			block(ctx, "for(auto entity_handle : old_entity_handles)", [&] {
+				ctx.writef("entity_manager.Defer().DestroyEntity(entity_handle);\n");
+			});
+		}
+	);
+
+	ctx.writef("\n");
+	block(
+		ctx,
+		std::format(
+			"auto {}::GetEcsactMassEntityHandles(int32 Entity) -> "
+			"TArray<FMassEntityHandle>",
+			one_to_one_spawner_name
+		),
+		[&] {
+			ctx.writef(
+				"auto handles = "
+				"MassEntities.Find(static_cast<ecsact_entity_id>(Entity));\n"
+			);
+			ctx.writef("if(!handles) return {{}};\n");
+			ctx.writef("return *handles;\n");
+		}
+	);
+
+	ctx.writef("\n");
+	block(
+		ctx,
+		std::format(
+			"auto {}::GetEntityMassConfig() const -> UMassEntityConfigAsset*\n",
+			one_to_one_spawner_name
+		),
+		[&] { ctx.writef("return MassEntityConfigAsset;\n"); }
+	);
+}
+
 auto ecsact_codegen_plugin(
 	ecsact_package_id          package_id,
 	ecsact_codegen_write_fn_t  write_fn,
@@ -689,4 +1229,10 @@ auto ecsact_codegen_plugin(
 ) -> void {
 	generate_header({package_id, GENERATED_HEADER_INDEX, write_fn, report_fn});
 	generate_source({package_id, GENERATED_SOURCE_INDEX, write_fn, report_fn});
+	generate_mass_header(
+		{package_id, GENERATED_MASS_HEADER_INDEX, write_fn, report_fn}
+	);
+	generate_mass_source(
+		{package_id, GENERATED_MASS_SOURCE_INDEX, write_fn, report_fn}
+	);
 }
