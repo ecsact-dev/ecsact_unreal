@@ -65,7 +65,7 @@ public class Ecsact : ModuleRules {
 			"ECSACT_META_API_LOAD_AT_RUNTIME",
 			"ECSACT_SERIALIZE_API_LOAD_AT_RUNTIME",
 			"ECSACT_STATIC_API_LOAD_AT_RUNTIME",
-			"ECSACTSI_WASM_API_LOAD_AT_RUNTIME",
+			"ECSACT_SI_WASM_API_LOAD_AT_RUNTIME",
 		});
 		PrivateDefinitions.AddRange(new string[] {
 			"ECSACT_CORE_API_EXPORT",
@@ -74,7 +74,7 @@ public class Ecsact : ModuleRules {
 			"ECSACT_META_API_EXPORT",
 			"ECSACT_SERIALIZE_API_EXPORT",
 			"ECSACT_STATIC_API_EXPORT",
-			"ECSACTSI_WASM_API_EXPORT",
+			"ECSACT_SI_WASM_API_EXPORT",
 		});
 
 		var EcsactSources = GetEcsactSources();

@@ -25,6 +25,8 @@ public:
 	// TODO: Put this somewhere good.
 	ecsact_registry_id registry_id = ECSACT_INVALID_ID(registry);
 
+	UEcsactSyncRunner();
+
 	auto Tick(float DeltaTime) -> void override;
 	auto GetStatId() const -> TStatId override;
 };

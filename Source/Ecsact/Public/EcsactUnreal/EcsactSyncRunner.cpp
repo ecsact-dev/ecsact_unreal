@@ -3,7 +3,10 @@
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
 #include "EcsactUnreal/EcsactExecution.h"
 #include "ecsact/runtime/core.h"
-#include "ecsact/wasm.h"
+#include "ecsact/si/wasm.h"
+
+UEcsactSyncRunner::UEcsactSyncRunner() : Super() {
+}
 
 auto UEcsactSyncRunner::StreamImpl(
 	ecsact_entity_id    Entity,
@@ -45,18 +48,21 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 	}
 
 	if(registry_id != ECSACT_INVALID_ID(registry)) {
-		ecsact_execution_options* exec_opts = nullptr;
-		if(ExecutionOptions != nullptr && ExecutionOptions->IsNotEmpty()) {
-			exec_opts = ExecutionOptions->GetCPtr();
-		}
-
 		if(ecsact_execute_systems) {
-			auto err =
-				ecsact_execute_systems(registry_id, 1, exec_opts, GetEventsCollector());
+			ecsact_execution_options* exec_opts = nullptr;
+			if(ExecutionOptions != nullptr && ExecutionOptions->IsNotEmpty()) {
+				exec_opts = ExecutionOptions->GetCPtr();
+			}
+			auto err = ecsact_execute_systems( //
+				registry_id,
+				1,
+				exec_opts,
+				GetEventsCollector()
+			);
 			if(err != ECSACT_EXEC_SYS_OK) {
 				UE_LOG(Ecsact, Error, TEXT("Ecsact execution failed"));
 			}
-			if(ExecutionOptions) {
+			if(ExecutionOptions != nullptr) {
 				ExecutionOptions->Clear();
 			}
 		} else {
@@ -68,23 +74,23 @@ auto UEcsactSyncRunner::Tick(float DeltaTime) -> void {
 		}
 	}
 
-	if(ecsactsi_wasm_consume_logs != nullptr) {
-		ecsactsi_wasm_consume_logs(
+	if(ecsact_si_wasm_consume_logs != nullptr) {
+		ecsact_si_wasm_consume_logs(
 			[](
-				ecsactsi_wasm_log_level log_level,
-				const char*             message,
-				int32_t                 message_length,
-				void*                   user_data
+				ecsact_si_wasm_log_level log_level,
+				const char*              message,
+				int32_t                  message_length,
+				void*                    user_data
 			) {
 				switch(log_level) {
 					default:
-					case ECSACTSI_WASM_LOG_LEVEL_INFO:
+					case ECSACT_SI_WASM_LOG_LEVEL_INFO:
 						UE_LOG(Ecsact, Log, TEXT("%.*hs"), message_length, message);
 						break;
-					case ECSACTSI_WASM_LOG_LEVEL_WARNING:
+					case ECSACT_SI_WASM_LOG_LEVEL_WARNING:
 						UE_LOG(Ecsact, Warning, TEXT("%.*hs"), message_length, message);
 						break;
-					case ECSACTSI_WASM_LOG_LEVEL_ERROR:
+					case ECSACT_SI_WASM_LOG_LEVEL_ERROR:
 						UE_LOG(Ecsact, Error, TEXT("%.*hs"), message_length, message);
 						break;
 				}

@@ -3,7 +3,7 @@
 #include "EcsactUnreal/Ecsact.h"
 #include "EcsactUnreal/RuntimeHandle.h"
 #include "ecsact/runtime.h"
-#include "ecsact/wasm.h"
+#include "ecsact/si/wasm.h"
 
 /** @internal - DO NOT USE */
 #define ECSACT_API_FN_INIT_(fn, UNUSED_PARAM) decltype(fn) fn = nullptr
@@ -65,7 +65,7 @@
 				return {};                                                         \
 			}                                                                    \
 			FOR_EACH_ECSACT_API_FN(ECSACTAPI_FN_FN_LOAD_);                       \
-			FOR_EACH_ECSACTSI_WASM_API_FN(ECSACTAPI_FN_FN_LOAD_);                \
+			FOR_EACH_ECSACT_SI_WASM_API_FN(ECSACTAPI_FN_FN_LOAD_);               \
 			return result;                                                       \
 		})()
 
@@ -80,7 +80,7 @@
 			}                                                             \
 			EcsactUnreal::Detail::UnloadPostDisconnect(module, Handle_);  \
 			FOR_EACH_ECSACT_API_FN(ECSACT_API_FN_RESET_);                 \
-			FOR_EACH_ECSACTSI_WASM_API_FN(ECSACT_API_FN_RESET_);          \
+			FOR_EACH_ECSACT_SI_WASM_API_FN(ECSACT_API_FN_RESET_);         \
 			EcsactUnreal::Detail::UnloadPostReset(module, Handle_);       \
 		})(Handle)
 

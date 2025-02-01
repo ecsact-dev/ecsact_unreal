@@ -183,6 +183,8 @@ auto UEcsactRunner::OnEntityCreatedRaw(
 ) -> void {
 	auto self = static_cast<ThisClass*>(callback_user_data);
 
+	UE_LOG(Ecsact, Error, TEXT("OnEntityCreatedRaw"));
+
 	auto create_callback =
 		self->CreateEntityCallbacks.Find(placeholder_entity_id);
 	if(create_callback) {
