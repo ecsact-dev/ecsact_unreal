@@ -298,6 +298,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	inc_header(ctx, "UObject/Interface.h");
 	ctx.writef("#include <array>\n");
 	inc_header(ctx, "ecsact/runtime/common.h");
+	inc_header(ctx, "EcsactUnreal/Ecsact.h");
 	inc_header(ctx, "EcsactUnreal/EcsactRunnerSubsystem.h");
 	inc_package_header(ctx, ctx.package_id, ".hh");
 	inc_package_header_no_ext(ctx, ctx.package_id, "__ecsact__ue.generated.h");
@@ -308,7 +309,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	ctx.writef("\n\n");
 
 	block(ctx, "namespace EcsactUnreal::CodegenMeta", [&] {
-		print_ecsact_unreal_package_meta(prefix, ctx);
+		print_ecsact_unreal_package_meta(package_pascal_name, ctx);
 	});
 	ctx.writef("\n\n");
 
@@ -1070,19 +1071,15 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 			ctx.writef("auto* world = GetWorld();\n");
 			ctx.writef("check(world);\n\n");
 			ctx.writef("auto* config = GetEntityMassConfig();\n");
-			ctx.writef("if(!config) {{\n");
-			ctx.writef(
-				"UE_LOG(LogTemp, Warning, TEXT(\"COULD NOT GET MASSENTITY CONFIG\"));\n"
-			);
-			ctx.writef("}}\n");
-			ctx.writef("else {{\n");
-			ctx.writef(
-				"UE_LOG(LogTemp, Warning, TEXT(\"FOUND A MASS ENTITY CONFIG "
-				"OWOWOW\"));\n"
-			);
-			ctx.writef("}}\n");
-			ctx.writef("check(config);\n\n");
-
+			block(ctx, "if(!config)", [&] {
+				ctx.writef(
+					"\tUE_LOG(Ecsact, Warning, TEXT(\"{}::GetEntityMassConfig() returned "
+					"null\"));\n",
+					one_to_one_spawner_name
+				);
+				ctx.writef("return;");
+			});
+			ctx.writef("\n");
 			ctx.writef(
 				"const auto& entity_template = "
 				"config->GetOrCreateEntityTemplate(*world);\n"
@@ -1159,9 +1156,11 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 		),
 		[&] {
 			ctx.writef(
-				"return "
-				"MassEntities.FindChecked(static_cast<ecsact_entity_id>(Entity));\n"
+				"auto handles = "
+				"MassEntities.Find(static_cast<ecsact_entity_id>(Entity));\n"
 			);
+			ctx.writef("if(!handles) return {{}};\n");
+			ctx.writef("return *handles;\n");
 		}
 	);
 
