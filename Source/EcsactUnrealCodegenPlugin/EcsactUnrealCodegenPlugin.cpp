@@ -965,6 +965,10 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 				block(ctx, "for(auto entity_handle : entity_handles)", [&] {
 					if(fields.size() > 0) {
 						ctx.writef(
+							"entity_manager.Defer().AddFragment<{}>(entity_handle);\n",
+							comp_fragment_name
+						);
+						ctx.writef(
 							"entity_manager.Defer().PushCommand<"
 							"FMassCommandAddFragmentInstances>(entity_handle, {}{{{}}});\n",
 							comp_fragment_name,
@@ -1146,6 +1150,10 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 			);
 
 			block(ctx, "for(auto entity_handle : new_entity_handles)", [&] {
+				ctx.writef(
+					"entity_manager.Defer().AddFragment<FEcsactEntityFragment>(entity_"
+					"handle);\n"
+				);
 				ctx.writef(
 					"entity_manager.Defer().PushCommand<FMassCommandAddFragmentInstances>"
 					"(entity_handle, "
