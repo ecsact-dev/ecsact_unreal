@@ -851,7 +851,7 @@ static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
 	);
 	// "(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
 	ctx.writef(";\n\n");
-	ctx.writef("UCLASS(Blueprintable)\n");
+	ctx.writef("UCLASS(Abstract)\n");
 	block(
 		ctx,
 		std::format(
@@ -941,9 +941,9 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 					if(fields.size() > 0) {
 						ctx.writef(
 							"entity_manager.Defer().PushCommand<"
-							"FMassCommandAddFragmentInstances>(entity_handle, {}{{}});\n",
+							"FMassCommandAddFragmentInstances>(entity_handle, {}{{{}}});\n",
 							comp_fragment_name,
-							comp_ustruct_name
+							comp_pascal_name
 						);
 					} else {
 						ctx.writef(
@@ -1070,6 +1070,17 @@ static auto generate_mass_source(ecsact::codegen_plugin_context ctx) -> void {
 			ctx.writef("auto* world = GetWorld();\n");
 			ctx.writef("check(world);\n\n");
 			ctx.writef("auto* config = GetEntityMassConfig();\n");
+			ctx.writef("if(!config) {{\n");
+			ctx.writef(
+				"UE_LOG(LogTemp, Warning, TEXT(\"COULD NOT GET MASSENTITY CONFIG\"));\n"
+			);
+			ctx.writef("}}\n");
+			ctx.writef("else {{\n");
+			ctx.writef(
+				"UE_LOG(LogTemp, Warning, TEXT(\"FOUND A MASS ENTITY CONFIG "
+				"OWOWOW\"));\n"
+			);
+			ctx.writef("}}\n");
 			ctx.writef("check(config);\n\n");
 
 			ctx.writef(
