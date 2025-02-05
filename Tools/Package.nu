@@ -1,4 +1,10 @@
 def get-ue-install-dirs [] {
+	if (sys host | get name) != "Windows" {
+		print "Automatic unreal detection only supported on Windows"
+		print "Please specify the --ue-install-dir option"
+		exit 1
+	}
+
 	let eng_reg_version_keys = ^reg.exe query 'HKLM\SOFTWARE\EpicGames\Unreal Engine' | str trim | lines;
 	$eng_reg_version_keys | each {|key|
 		^reg.exe query $key /v 'InstalledDirectory' | str trim | lines | get 1 | str trim | split column '    ' key type value | get value
@@ -15,8 +21,8 @@ def get-ue-os [] {
 	}
 }
 
-def main [] {
-	let install_dirs = get-ue-install-dirs;
+def main [--ue-install-dir: string] {
+	let install_dirs = if $ue_install_dir != null { [$ue_install_dir] } else { get-ue-install-dirs };
 	let plugin_dir = $env.FILE_PWD | path join '..' | path expand;
 	let dist_dir = [$plugin_dir, 'Dist'] | path join;
 	mkdir $dist_dir;
