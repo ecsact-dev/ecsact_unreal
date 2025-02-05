@@ -88,7 +88,7 @@ public:
 
 	virtual auto OnWorldChanged(UWorld* OldWorld, UWorld* NewWorld) -> void;
 
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Ecsact Runner")
 	bool HasAsyncEvents() const;
 
 	auto Tick(float DeltaTime) -> void override;
