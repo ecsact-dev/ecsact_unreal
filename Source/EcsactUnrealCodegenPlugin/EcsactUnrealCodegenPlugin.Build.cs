@@ -18,6 +18,7 @@ public class EcsactUnrealCodegenPlugin : ModuleRules {
 		// Codegen plugins utilise the ecsact 'meta' module
 		PrivateDefinitions.AddRange(new string[] {
 			"ECSACT_META_API_LOAD_AT_RUNTIME",
+			"ECSACT_META_API_EXPORT",
 		});
 	}
 
