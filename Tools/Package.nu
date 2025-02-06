@@ -34,12 +34,12 @@ export def package-plugin [--ue-install-dir: string] {
 	let plugin_dir = $env.FILE_PWD | path join '..' | path expand;
 	let dist_dir = [$plugin_dir, 'Dist'] | path join;
 	mkdir $dist_dir;
-	let dist_archive = [$plugin_dir, 'Dist', $"EcsactUnreal-(get-ue-os).zip"] | path join;
 	cd $plugin_dir;
 	let plugin_descriptor_filename = (ls *.uplugin).0.name;
 	let plugin_name = $plugin_descriptor_filename | split row ".uplugin" | get 0;
+	let dist_archive = [$plugin_dir, 'Dist', $"($plugin_name)Unreal-(get-ue-os).zip"] | path join;
 	let plugin_descriptor = [$plugin_dir, $plugin_descriptor_filename] | path join;
-	let temp_package_dir = mktemp -d --suffix 'EcsactUnrealPluginPackage';
+	let temp_package_dir = mktemp -d --suffix $"($plugin_name)UnrealPluginPackage";
 
 	if ($install_dirs | length) == 0 {
 		print "Could not find Unreal Engine installation on your system";
