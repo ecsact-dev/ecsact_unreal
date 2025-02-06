@@ -29,7 +29,7 @@ def ue-tool-extension [] {
 	}
 }
 
-def main [--ue-install-dir: string] {
+def package-plugin [--ue-install-dir: string] {
 	let install_dirs = if $ue_install_dir != null { [$ue_install_dir] } else { get-ue-install-dirs };
 	let plugin_dir = $env.FILE_PWD | path join '..' | path expand;
 	let dist_dir = [$plugin_dir, 'Dist'] | path join;
@@ -53,11 +53,18 @@ def main [--ue-install-dir: string] {
 	print $"using ($install_dir)";
 
 	let engine_dir = [$install_dir, 'Engine'] | path join;
-
-
 	let uat = [$engine_dir, 'Build', 'BatchFiles', $"RunUAT.(ue-tool-extension)"] | path join;
 	^$uat BuildPlugin $"-Plugin=($plugin_descriptor)" $"-Package=($temp_package_dir)";
 
 	tar -a -cf $dist_archive -C $temp_package_dir '*';
 	rm -rf $temp_package_dir;
+
+	return {
+		ue_install: $install_dir,
+		plugin_archive: $dist_archive,
+	};
+}
+
+def main [--ue-install-dir: string] {
+	package-plugin --ue-install-dir $ue_install_dir
 }
