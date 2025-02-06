@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/Interface.h"
 #include "ecsact/runtime/common.h"
 #include "ecsact/runtime/async.h"
 #include "EcsactAsyncRunnerEvents.generated.h"

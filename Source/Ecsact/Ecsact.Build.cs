@@ -32,20 +32,6 @@ public class Ecsact : ModuleRules {
 			"SlateCore",
 		});
 
-		DynamicallyLoadedModuleNames.AddRange(new string[] {
-			"EcsactUnrealCodegenPlugin",
-		});
-		//
-
-		var EcsactUnrealCodegenPluginPath = Path.Combine(
-			ModuleDirectory,
-			"..",
-			"..",
-			"Binaries",
-			Target.Platform.ToString(),
-			"UnrealEditor-EcsactUnrealCodegenPlugin.dll"
-		);
-
 		if(Target.bBuildEditor) {
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
@@ -78,31 +64,6 @@ public class Ecsact : ModuleRules {
 			"ECSACT_STATIC_API_EXPORT",
 			"ECSACT_SI_WASM_API_EXPORT",
 		});
-
-		var EcsactSources = GetEcsactSources();
-
-		if(EcsactSources.Length > 0) {
-			var CodegenArgs = new List<string>() {
-				"codegen",
-				"--format=json",
-				"--plugin=cpp_header",
-				// "--plugin=systems_header",
-				// "--plugin=cpp_systems_header",
-				// "--plugin=cpp_systems_source"
-			};
-
-			if(!File.Exists(EcsactUnrealCodegenPluginPath)) {
-				Console.WriteLine(
-					"warning: EcsactUnrealCodegenPlugin was not built. It should have " +
-					"been shipped with the Ecsact Unreal integration plugin."
-				);
-			} else {
-				CodegenArgs.Add($"--plugin={EcsactUnrealCodegenPluginPath}");
-			}
-
-			CodegenArgs.AddRange(EcsactSources);
-			ExecEcsactCli(CodegenArgs);
-		}
 	}
 
 	private string[] GetEcsactSources() {

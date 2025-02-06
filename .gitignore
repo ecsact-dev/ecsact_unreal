@@ -80,3 +80,6 @@ compile_commands.json
 # Generated Ecsact files
 
 Source/**/*.ecsact.*
+
+# Distribution files
+/Dist
