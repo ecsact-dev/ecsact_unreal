@@ -14,10 +14,18 @@ def get-ue-install-dirs [] {
 def get-ue-os [] {
 	match (sys host | get name) {
 		"Windows" => "Win64",
+		"Ubuntu" => "Linux",
 		_ => {
 			print $"unhandled host (sys host)"
 			exit 1
 		}
+	}
+}
+
+def ue-tool-extension [] {
+	match (sys host | get name) {
+		"Windows" => "bat",
+		_ => "sh",
 	}
 }
 
@@ -47,7 +55,7 @@ def main [--ue-install-dir: string] {
 	let engine_dir = [$install_dir, 'Engine'] | path join;
 
 
-	let uat = [$engine_dir, 'Build', 'BatchFiles', 'RunUAT.bat'] | path join;
+	let uat = [$engine_dir, 'Build', 'BatchFiles', $"RunUAT.(ue-tool-extension)"] | path join;
 	^$uat BuildPlugin $"-Plugin=($plugin_descriptor)" $"-Package=($temp_package_dir)";
 
 	tar -a -cf $dist_archive -C $temp_package_dir '*';
