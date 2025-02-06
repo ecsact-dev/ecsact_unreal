@@ -32,10 +32,6 @@ public class Ecsact : ModuleRules {
 			"SlateCore",
 		});
 
-		DynamicallyLoadedModuleNames.AddRange(new string[] {
-			"EcsactUnrealCodegenPlugin",
-		});
-
 		if(Target.bBuildEditor) {
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}

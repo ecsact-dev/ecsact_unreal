@@ -13,7 +13,9 @@
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
+	"EngineVersion": "5.5.0",
+	"EnabledByDefault": false,
 	"Modules":
 	[
 		{
