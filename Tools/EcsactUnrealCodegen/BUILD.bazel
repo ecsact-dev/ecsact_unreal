@@ -45,9 +45,9 @@ PLATFORMS_EXT = {
 PLATFORM_UNREAL_MAP = {
     "windows_amd64": "Win64",
     "linux_amd64": "Linux",
-    "linux_arm64": "LinuxArm",
+    "linux_arm64": "LinuxArm64",
     "darwin_amd64": "Mac",
-    "darwin_arm64": "MacArm",
+    "darwin_arm64": "MacArm64",
 }
 
 [
