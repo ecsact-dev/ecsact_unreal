@@ -13,7 +13,7 @@
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
-	"Installed": true,
+	"Installed": false,
 	"EngineVersion": "5.5.0",
 	"EnabledByDefault": false,
 	"ExcludeDirectories": [

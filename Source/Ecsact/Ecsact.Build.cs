@@ -5,8 +5,7 @@ using System;
 using System.Collections.Generic;
 using EpicGames.Core;
 
-[Serializable]
-public class EcsactSdkNotFound : Exception {
+class EcsactSdkNotFound : Exception {
 	public EcsactSdkNotFound(Exception inner)
 		: base(
 				"Ecsact CLI not found in PATH. Please make sure you have the Ecsact " +
