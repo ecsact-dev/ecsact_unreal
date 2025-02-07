@@ -9,9 +9,8 @@
 DECLARE_LOG_CATEGORY_EXTERN(EcsactEditor, Log, All);
 
 class ECSACTEDITOR_API FEcsactEditorModule : public IModuleInterface {
-	FDelegateHandle        SourcesWatchHandle;
-	FDelegateHandle        PluginBinariesWatchHandle;
-	TMap<FString, FString> CodegenPluginHotReloadNames;
+	FDelegateHandle SourcesWatchHandle;
+	FDelegateHandle PluginBinariesWatchHandle;
 
 public:
 	using FOnExitDelegate = TDelegate<void(int32)>;
@@ -28,7 +27,6 @@ private:
 	) -> void;
 	auto OnReceiveEcsactCliJsonMessage(FString Json) -> void;
 	auto AddMenuEntry(class FMenuBuilder& MenuBuilder) -> void;
-	auto GetUnrealCodegenPlugins() -> TArray<FString>;
 	auto LoadRunnerSubsystemBlueprints() -> void;
 
 	auto OnAssetsAdded(TConstArrayView<FAssetData> Assets) -> void;
@@ -45,7 +43,6 @@ public:
 
 	static auto GetAllEcsactFiles() -> TArray<FString>;
 
-	auto RunCodegen() -> void;
 	auto RunBuild() -> void;
 
 	auto StartupModule() -> void override;
