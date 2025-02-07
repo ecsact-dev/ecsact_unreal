@@ -26,5 +26,5 @@ def main [version: string] {
 	git add $plugin_descriptor_filename;
 	git commit -m $"chore: update version ($version)";
 	git push;
-	gh release create $version --generate-notes --latest -t $version "./Dist/*";
+	gh release create $version --generate-notes --latest -t $version Dist/*;
 }
