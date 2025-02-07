@@ -1,6 +1,8 @@
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
+package(default_visibility = ["//visibility:public"])
+
 cc_binary(
     name = "EcsactUnrealCodegen",
     srcs = ["EcsactUnrealCodegen.cpp"],

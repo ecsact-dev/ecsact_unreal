@@ -1,3 +1,5 @@
+module(name = "ecsact_unreal_codegen")
+
 bazel_dep(name = "rules_cc", version = "0.0.17")
 bazel_dep(name = "boost.process", version = "1.83.0.bcr.1")
 bazel_dep(name = "aspect_bazel_lib", version = "2.13.0")
