@@ -1,0 +1,25 @@
+bazel_dep(name = "rules_cc", version = "0.0.17")
+bazel_dep(name = "boost.process", version = "1.83.0.bcr.1")
+bazel_dep(name = "aspect_bazel_lib", version = "2.13.0")
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "boost.program_options", version = "1.83.0.bcr.2")
+bazel_dep(name = "hermetic_cc_toolchain", version = "3.1.1")
+
+zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(zig_toolchains, "zig_sdk")
+
+register_toolchains(
+    "@zig_sdk//toolchain:windows_amd64",
+    "@zig_sdk//toolchain:linux_amd64_musl",
+    "@zig_sdk//toolchain:linux_arm64_musl",
+    "@zig_sdk//toolchain:darwin_amd64",
+    "@zig_sdk//toolchain:darwin_arm64",
+    dev_dependency = True,
+)
+
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    commit = "204aa593e002cbd177d30f11f54cff3559110bb9",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)

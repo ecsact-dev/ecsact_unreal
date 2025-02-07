@@ -1,0 +1,42 @@
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "EcsactUnrealCodegen",
+    srcs = ["EcsactUnrealCodegen.cpp"],
+    copts = ["-std=c++20"],
+    linkopts = select({
+        "//conditions:default": [],
+        "@platforms//os:windows": [
+            "-lWs2_32",
+            "-lMswsock",
+            "-lBcrypt",
+        ],
+    }),
+    deps = [
+        "@boost.process",
+        "@boost.program_options",
+    ],
+)
+
+PLATFORMS = [
+    "@zig_sdk//platform:windows_amd64",
+    "@zig_sdk//platform:linux_amd64",
+    "@zig_sdk//platform:linux_arm64",
+    "@zig_sdk//platform:darwin_amd64",
+    "@zig_sdk//platform:darwin_arm64",
+]
+
+[
+    platform_transition_filegroup(
+        name = "EcsactUnrealCodegen-" + platform.split(":")[1],
+        srcs = [":EcsactUnrealCodegen"],
+        target_platform = platform,
+    )
+    for platform in PLATFORMS
+]
+
+filegroup(
+    name = "AllPlatforms",
+    srcs = ["EcsactUnrealCodegen-" + platform.split(":")[1] for platform in PLATFORMS],
+)
