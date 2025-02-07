@@ -14,7 +14,7 @@ def main [version: string] {
 	mut plugin_descriptor = open $plugin_descriptor_filename | from json;
 	$plugin_descriptor.Version += 1;
 	$plugin_descriptor.VersionName = $version;
-	$plugin_descriptor | to json -t 1 | save $plugin_descriptor_filename;
+	$plugin_descriptor | to json -t 1 | save $plugin_descriptor_filename -f;
 
 	cd $ecsact_unreal_codegen_dir;
 	^bazel run //:CopyDist;
@@ -22,6 +22,9 @@ def main [version: string] {
 	package-plugin;
 
 	ls $dist_dir;
-
+	
+	git add $plugin_descriptor_filename;
+	git commit -m $"chore: update version ($version)";
+	git push;
 	gh release create $version --generate-notes --latest -t $version "./Dist/*";
 }
