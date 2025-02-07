@@ -1,5 +1,6 @@
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@bzlws//rules:bzlws_copy.bzl", "bzlws_copy")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = ["//visibility:public"])
@@ -74,4 +75,10 @@ PLATFORM_UNREAL_MAP = {
 filegroup(
     name = "AllPlatforms",
     srcs = [":copy_EcsactUnrealCodegen-{}".format(platform.split(":")[1]) for platform in PLATFORMS],
+)
+
+bzlws_copy(
+    name = "CopyDist",
+    srcs = [":AllPlatforms"],
+    out = "../../Dist/{FILENAME}",
 )

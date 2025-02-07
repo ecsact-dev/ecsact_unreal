@@ -16,6 +16,9 @@
 	"Installed": true,
 	"EngineVersion": "5.5.0",
 	"EnabledByDefault": false,
+	"ExcludeDirectories": [
+		"Tools"
+	],
 	"Modules":
 	[
 		{
