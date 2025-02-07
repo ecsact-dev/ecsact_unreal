@@ -4,7 +4,10 @@ load("@rules_cc//cc:defs.bzl", "cc_binary")
 cc_binary(
     name = "EcsactUnrealCodegen",
     srcs = ["EcsactUnrealCodegen.cpp"],
-    copts = ["-std=c++20"],
+    copts = [
+        "-std=c++20",
+        "-fexperimental-library",
+    ],
     linkopts = select({
         "//conditions:default": [],
         "@platforms//os:windows": [

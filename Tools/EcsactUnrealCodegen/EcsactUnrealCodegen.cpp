@@ -1,8 +1,12 @@
 #include <iostream>
 #include <filesystem>
+#ifdef __cpp_lib_execution
+#	include <execution>
+#endif
 #include <boost/process.hpp>
 #include <boost/program_options.hpp>
 
+using namespace std::string_literals;
 namespace fs = std::filesystem;
 namespace bp = boost::process;
 namespace po = boost::program_options;
@@ -70,6 +74,32 @@ auto proc_stdout(auto&&... args) -> std::optional<std::string> {
 	return std::nullopt;
 }
 
+auto proc_stdout_list(auto&&... args) -> std::vector<std::string> {
+	auto stdout_stream = bp::ipstream{};
+	auto proc = bp::child{
+		args...,
+		bp::std_out > stdout_stream,
+		bp::std_err > stderr,
+	};
+
+	auto lines = std::vector<std::string>{};
+	auto line = std::string{};
+	while(std::getline(stdout_stream, line)) {
+		if(line.ends_with("\r")) {
+			line.pop_back();
+		}
+		lines.emplace_back(line);
+	}
+
+	proc.wait();
+
+	if(proc.exit_code() == 0) {
+		return lines;
+	}
+
+	return {};
+}
+
 struct plugin_dir_info {
 	fs::path    plugin_path;
 	std::string plugin_name;
@@ -90,6 +120,12 @@ auto get_plugin_dir_info( //
 	return std::nullopt;
 }
 
+auto is_clang_formattable(const fs::path& p) -> bool {
+	auto ext = p.extension();
+	return ext == ".cpp" || ext == ".c" || ext == ".h" || ext == ".cc" ||
+		ext == ".hh" || ext == ".hpp";
+}
+
 auto main(int argc, char* argv[]) -> int {
 	auto desc = po::options_description{};
 	auto pos_desc = po::positional_options_description{};
@@ -97,6 +133,7 @@ auto main(int argc, char* argv[]) -> int {
 	// clang-format off
 	desc.add_options()
 		("help", "show this help message")
+		("format", "run clang-format on generated c/c++ files")
 		("engine-dir", po::value<std::string>(), "the unreal engine directory this project uses")
 		("project-path", po::value<std::string>(), "path to unreal project file or directory");
 	// clang-format on
@@ -128,7 +165,8 @@ auto main(int argc, char* argv[]) -> int {
 
 	auto engine_dir = fs::path{vm.at("engine-dir").as<std::string>()};
 	auto engine_plugins_dir = engine_dir / "Plugins" / "Marketplace";
-	std::cout << "INFO: engine directory is '" << engine_dir << "'\n";
+	std::cout //
+		<< "INFO: engine directory is '" << engine_dir.generic_string() << "'\n";
 
 	auto ecsact_plugin_info = std::optional<plugin_dir_info>{};
 
@@ -274,5 +312,63 @@ auto main(int argc, char* argv[]) -> int {
 
 	codegen_proc.wait();
 
-	return codegen_proc.exit_code();
+	if(auto exit_code = codegen_proc.exit_code(); exit_code != 0) {
+		std::cerr //
+			<< "ERROR: ecsact codegen failed with exit code " << exit_code << "\n";
+		return exit_code;
+	}
+
+	if(vm.count("format")) {
+		auto clang_format = bp::search_path("clang-format");
+
+		if(clang_format.empty()) {
+			std::cerr //
+				<< "ERROR: --format specified but clang-format was not found on PATH\n";
+			return 1;
+		}
+
+		ecsact_codegen_args.emplace_back("--print-output-files");
+		auto output_files = proc_stdout_list( //
+			bp::exe(ecsact_cli->string()),
+			bp::args(ecsact_codegen_args)
+		);
+
+		auto formattable_output_files = std::vector<fs::path>{};
+		for(fs::path output_path : output_files) {
+			if(is_clang_formattable(output_path)) {
+				formattable_output_files.emplace_back(output_path);
+			}
+		}
+
+		if(!formattable_output_files.empty()) {
+			std::cout << "INFO: formatting code generated files\n";
+			std::for_each(
+#ifdef __cpp_lib_execution
+				std::execution::par,
+#endif
+				formattable_output_files.begin(),
+				formattable_output_files.end(),
+				[&](fs::path p) {
+					auto format_proc = bp::child{
+						bp::exe(clang_format),
+						bp::args({"-i"s, fs::absolute(p).string()}),
+						bp::start_dir(project_dir.string()),
+					};
+
+					format_proc.wait();
+
+					auto format_exit_code = format_proc.exit_code();
+					if(format_exit_code != 0) {
+						std::cerr //
+							<< "ERROR: failed to format '" << p.generic_string() << "'\n"
+							<< "ERROR: clang-format exit code " << format_exit_code << "\n";
+					}
+				}
+			);
+		}
+	}
+
+	std::cout << "SUCCESS: ecsact codegen finished\n";
+
+	return 0;
 }
