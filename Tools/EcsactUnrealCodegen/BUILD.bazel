@@ -1,4 +1,5 @@
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 package(default_visibility = ["//visibility:public"])
@@ -32,16 +33,45 @@ PLATFORMS = [
     "@zig_sdk//platform:darwin_arm64",
 ]
 
+PLATFORMS_EXT = {
+    "windows_amd64": ".exe",
+    "linux_amd64": "",
+    "linux_arm64": "",
+    "darwin_amd64": "",
+    "darwin_arm64": "",
+}
+
+PLATFORM_UNREAL_MAP = {
+    "windows_amd64": "Win64",
+    "linux_amd64": "Linux",
+    "linux_arm64": "LinuxArm",
+    "darwin_amd64": "Mac",
+    "darwin_arm64": "MacArm",
+}
+
 [
     platform_transition_filegroup(
-        name = "EcsactUnrealCodegen-" + platform.split(":")[1],
+        name = "for_{}-EcsactUnrealCodegen".format(platform.split(":")[1]),
         srcs = [":EcsactUnrealCodegen"],
         target_platform = platform,
     )
     for platform in PLATFORMS
 ]
 
+[
+    copy_file(
+        name = "copy_EcsactUnrealCodegen-{}".format(platform.split(":")[1]),
+        src = ":for_{}-EcsactUnrealCodegen".format(platform.split(":")[1]),
+        out = "EcsactUnrealCodegen-{}{}".format(
+            PLATFORM_UNREAL_MAP[platform.split(":")[1]],
+            PLATFORMS_EXT[platform.split(":")[1]],
+        ),
+        is_executable = True,
+    )
+    for platform in PLATFORMS
+]
+
 filegroup(
     name = "AllPlatforms",
-    srcs = ["EcsactUnrealCodegen-" + platform.split(":")[1] for platform in PLATFORMS],
+    srcs = [":copy_EcsactUnrealCodegen-{}".format(platform.split(":")[1]) for platform in PLATFORMS],
 )
