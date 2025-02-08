@@ -116,7 +116,7 @@ auto FEcsactEditorModule::SpawnEcsactCli(
 	}
 
 	AsyncTask(
-		ENamedThreads::BackgroundThreadPriority,
+		ENamedThreads::AnyBackgroundThreadNormalTask,
 		[=, OnExit = std::move(OnExit)] {
 			void* PipeWriteChild;
 			void* PipeReadChild;
