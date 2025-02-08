@@ -81,10 +81,13 @@ export def package-plugin [--ue-install-dir: string] {
 
 	let engine_dir = [$install_dir, 'Engine'] | path join;
 	let uat = [$engine_dir, 'Build', 'BatchFiles', $"RunUAT.(ue-tool-extension)"] | path join;
-	^$uat BuildPlugin $"-Plugin=($plugin_descriptor)" $"-Package=($temp_package_dir)";
-
-	tar -a -cf $dist_archive -C $temp_package_dir '*';
-	rm -rf $temp_package_dir;
+	do { ^$uat BuildPlugin $"-Plugin=($plugin_descriptor)" $"-Package=($temp_package_dir)" }
+	let uat_exit_code = $env.LAST_EXIT_CODE;
+	
+	if $uat_exit_code == 0 {
+		tar -a -cf $dist_archive -C $temp_package_dir '*';
+		rm -rf $temp_package_dir;
+	}
 
 	if $removed_ecsact_net {
 		print $"(ansi yellow)Bringing back ($ecsact_net_plugin_dir)(ansi reset)";
@@ -92,11 +95,16 @@ export def package-plugin [--ue-install-dir: string] {
 		mv ([$ecsact_net_plugin_temp_dir, 'EcsactNet'] | path join) $engine_plugins_dir;
 	}
 
-	return {
-		ue_install: $install_dir,
-		plugin_name: $plugin_name,
-		plugin_archive: $dist_archive,
-	};
+
+	if $uat_exit_code == 0 {
+		return {
+			ue_install: $install_dir,
+			plugin_name: $plugin_name,
+			plugin_archive: $dist_archive,
+		};
+	}
+
+	error make {msg: $"UAT failed with exit code ($uat_exit_code)"}
 }
 
 def main [--ue-install-dir: string] {
