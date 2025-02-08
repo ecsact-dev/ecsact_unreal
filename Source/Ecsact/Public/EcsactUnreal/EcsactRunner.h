@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Tickable.h"
 #include "EcsactUnreal/EcsactUnrealExecutionOptions.h"
+#include "EcsactUnreal/EcsactRunnerSubsystem.h"
 #include "Subsystems/SubsystemCollection.h"
 #include "ecsact/runtime/common.h"
 #include "EcsactRunner.generated.h"
