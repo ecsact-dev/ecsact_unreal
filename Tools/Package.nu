@@ -52,7 +52,32 @@ export def package-plugin [--ue-install-dir: string] {
 		$install_dirs | get 0
 	};
 
+	let engine_plugins_dir = [$install_dir, "Engine", "Plugins", "Marketplace"] | path join;
+	let ecsact_net_plugin_dir = [$engine_plugins_dir, "EcsactNet"] | path join;
+	mut ecsact_net_plugin_temp_dir = "";
+	mut removed_ecsact_net = false;
+
 	print $"using ($install_dir)";
+
+	if ($ecsact_net_plugin_dir | path exists) {
+		print $"(ansi yellow)EcsactNet plugin found in ($engine_plugins_dir)(ansi reset)";
+		print $"(ansi yellow)EcsactNet plugin has to be moved before packaging Ecsact(ansi reset)";
+		$removed_ecsact_net = match (input "Continue?" -d "Yes" | str downcase) {
+			"yes" => true,
+			"y" => true,
+			"true" => true,
+			"ya" => true,
+			"sure" => true,
+			_ => false,
+		};
+		if not $removed_ecsact_net {
+			print "User aborted";
+			exit 1;
+		}
+		$ecsact_net_plugin_temp_dir = mktemp -d --suffix "EcsactNetUnrealPluginMove";
+		print $"(ansi yellow)Moving ($ecsact_net_plugin_dir) to ($ecsact_net_plugin_temp_dir) (ansi reset)";
+		mv $ecsact_net_plugin_dir $ecsact_net_plugin_temp_dir;
+	}
 
 	let engine_dir = [$install_dir, 'Engine'] | path join;
 	let uat = [$engine_dir, 'Build', 'BatchFiles', $"RunUAT.(ue-tool-extension)"] | path join;
@@ -60,6 +85,12 @@ export def package-plugin [--ue-install-dir: string] {
 
 	tar -a -cf $dist_archive -C $temp_package_dir '*';
 	rm -rf $temp_package_dir;
+
+	if $removed_ecsact_net {
+		print $"(ansi yellow)Bringing back ($ecsact_net_plugin_dir)(ansi reset)";
+		mkdir $ecsact_net_plugin_dir;
+		mv ([$ecsact_net_plugin_temp_dir, 'EcsactNet'] | path join) $engine_plugins_dir;
+	}
 
 	return {
 		ue_install: $install_dir,
