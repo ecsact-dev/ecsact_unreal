@@ -260,7 +260,7 @@ static auto print_ustruct(ecsact::codegen_plugin_context& ctx, auto in_compo_id)
 	auto compo_name = ecsact::meta::decl_full_name(compo_id);
 	auto compo_pascal_name = ecsact_ustruct_name(compo_id);
 
-	ctx.writef("USTRUCT(BlueprintType)\n");
+	ctx.writef("\nUSTRUCT(BlueprintType)\n");
 	block(ctx, std::format("struct {}", compo_pascal_name), [&] {
 		ctx.writef("GENERATED_BODY()\n\n");
 		auto fields = ecsact::meta::get_field_ids(compo_id);
@@ -342,7 +342,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 	}
 
 	ctx.write(std::format(
-		"UCLASS(Abstract, Blueprintable, meta = "
+		"\nUCLASS(Abstract, Blueprintable, meta = "
 		"(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
 		ecsact::meta::package_name(ctx.package_id)
 	));
@@ -415,7 +415,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				auto comp_pascal_name = ecsact_decl_name_to_pascal(comp_name);
 				auto comp_ustruct_name = ecsact_ustruct_name(comp_id);
 				ctx.write(std::format(
-					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"\nUFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
 					"meta = (DisplayName = \"Init {}\"))\n",
 					comp_full_name
 				));
@@ -431,7 +431,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				));
 
 				ctx.write(std::format(
-					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"\nUFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
 					"meta = (DisplayName = \"Update {}\"))\n",
 					comp_full_name
 				));
@@ -447,7 +447,7 @@ static auto generate_header(ecsact::codegen_plugin_context ctx) -> void {
 				));
 
 				ctx.write(std::format(
-					"UFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
+					"\nUFUNCTION(BlueprintNativeEvent, Category = \"Ecsact Runner\", "
 					"meta = (DisplayName = \"Remove {}\"))\n",
 					comp_full_name
 				));
@@ -763,7 +763,7 @@ static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
 	auto one_to_one_spawner_name =
 		package_pascal_to_one_to_one(package_pascal_name);
 
-	ctx.writef("USTRUCT()\n");
+	ctx.writef("\nUSTRUCT()\n");
 	block(ctx, "struct FEcsactEntityFragment : public FMassFragment", [&] {
 		ctx.writef("GENERATED_BODY()\n");
 		ctx.writef("FEcsactEntityFragment() = default;\n");
@@ -793,7 +793,7 @@ static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
 
 		auto fields = ecsact::meta::get_field_ids(comp_id);
 
-		ctx.writef("USTRUCT()\n");
+		ctx.writef("\nUSTRUCT()\n");
 		if(fields.size() > 0) {
 			block(
 				ctx,
@@ -821,7 +821,7 @@ static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
 
 	ctx.writef("\n");
 
-	ctx.writef("UCLASS(Abstract)\n");
+	ctx.writef("\nUCLASS(Abstract)\n");
 	block(
 		ctx,
 		std::format(
@@ -876,7 +876,7 @@ static auto generate_mass_header(ecsact::codegen_plugin_context ctx) -> void {
 	);
 	// "(DisplayName = \"Ecsact Runner Package Subsystem ({})\"))\n",
 	ctx.writef(";\n\n");
-	ctx.writef("UCLASS(Abstract)\n");
+	ctx.writef("\nUCLASS(Abstract)\n");
 	block(
 		ctx,
 		std::format(
