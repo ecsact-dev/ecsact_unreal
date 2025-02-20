@@ -1,6 +1,22 @@
 use Package.nu package-plugin
 
-def main [version: string] {
+const ECSACT_SDK_VERSION = "0.9.0"
+
+def fetch-third-party [] {
+	let ecsact_sdk_dir = "Source/ThirdParty/EcsactSDK" | path expand;
+	rm -rf $ecsact_sdk_dir;
+	mkdir $ecsact_sdk_dir;
+	let ecsact_sdk_zip = $"https://github.com/ecsact-dev/ecsact_sdk/releases/download/($ECSACT_SDK_VERSION)/ecsact_sdk_($ECSACT_SDK_VERSION)_windows_x64.zip";
+	http get --raw $ecsact_sdk_zip | tar -x -C $ecsact_sdk_dir;
+
+	# always use our version of EcsactUnrealCodegen incase there's a mismatch on release
+	cp "Dist/EcsactUnrealCodegen-Win64.exe" ([$ecsact_sdk_dir, "bin", "EcsactUnrealCodegen.exe"] | path join);
+}
+
+def main [version: string, --dry] {
+	if $dry {
+		print "dry run - release will not be created";
+	}
 	let plugin_dir = $env.FILE_PWD | path join '..' | path expand;
 	let dist_dir = [$plugin_dir, 'Dist'] | path join;
 	rm -rf $dist_dir;
@@ -19,12 +35,17 @@ def main [version: string] {
 	cd $ecsact_unreal_codegen_dir;
 	^bazel run //:CopyDist;
 	cd $plugin_dir;
+	fetch-third-party;
 	package-plugin;
 
 	ls $dist_dir;
 	
-	git add $plugin_descriptor_filename;
-	git commit -m $"chore: update version ($version)";
-	git push;
-	gh release create $version --generate-notes --latest -t $version Dist/*;
+	if not $dry {
+		git add $plugin_descriptor_filename;
+		git commit -m $"chore: update version ($version)";
+		git push;
+		gh release create $version --generate-notes --latest -t $version Dist/*;
+	} else {
+		print "dry run - release not created";
+	}
 }
