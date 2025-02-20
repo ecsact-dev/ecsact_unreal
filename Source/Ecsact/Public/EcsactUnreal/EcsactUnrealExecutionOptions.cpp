@@ -115,7 +115,8 @@ CreateEntityBuilder::CreateEntityBuilder(CreateEntityBuilder&& Other) {
 	Other.ComponentList = {};
 }
 
-auto CreateEntityBuilder::operator=(CreateEntityBuilder&& Other
+auto CreateEntityBuilder::operator=( //
+	CreateEntityBuilder&& Other
 ) -> CreateEntityBuilder& {
 	bValid = Other.bValid;
 	Owner = Other.Owner;

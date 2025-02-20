@@ -15,7 +15,6 @@ class EcsactSdkNotFound : Exception {
 	}
 }
 
-
 public class Ecsact : ModuleRules {
 	public Ecsact(ReadOnlyTargetRules Target) : base(Target) {
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
