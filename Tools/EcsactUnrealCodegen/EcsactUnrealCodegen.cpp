@@ -31,7 +31,33 @@ constexpr auto HELP_MSG =
 	// clang-format on
 	"See https://ecsact.dev/start/unreal for more details\n\n";
 
-auto find_ecsact_exe() -> std::optional<fs::path> {
+constexpr auto platform_exec_ext() -> std::string {
+#ifdef _WIN32
+	return ".exe";
+#else
+	return "";
+#endif
+}
+
+/**
+ * Find ecsact executable in priority order
+ *  1. the executable in the same parent directory as this one
+ *  2. the executable found in PATH
+ *  3. (windows only workaround) in LocalAppData/Microsoft/WindowsApps
+ */
+auto find_ecsact_exe(const char* argv0) -> std::optional<fs::path> {
+	auto ec = std::error_code{};
+	auto argv0_canon = fs::canonical(argv0, ec);
+	if(!ec) {
+		if(argv0_canon.has_parent_path()) {
+			auto exe_neighbour =
+				argv0_canon.parent_path() / ("ecsact" + platform_exec_ext());
+			if(fs::exists(exe_neighbour)) {
+				return exe_neighbour;
+			}
+		}
+	}
+
 	auto found_exe = bp::search_path("ecsact").generic_string();
 	if(!found_exe.empty()) {
 		return found_exe;
@@ -255,7 +281,7 @@ auto main(int argc, char* argv[]) -> int {
 	assert(!project_file.empty());
 
 	auto env = boost::process::native_environment{};
-	auto ecsact_cli = find_ecsact_exe();
+	auto ecsact_cli = find_ecsact_exe(argv[0]);
 	if(!ecsact_cli) {
 		std::cerr << "ERROR: Cannot find 'ecsact' in PATH " SDK_PLEASE;
 		return -1;
