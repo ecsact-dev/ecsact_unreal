@@ -7,6 +7,7 @@
 #include "EcsactEditor.h"
 #include "Async/Async.h"
 #include "Async/TaskGraphInterfaces.h"
+#include "Interfaces/IPluginManager.h"
 #include "CoreGlobals.h"
 #include "EcsactUnreal/Ecsact.h"
 #include "Editor.h"
@@ -89,24 +90,59 @@ static auto PlatformEcsactPluginExtension() -> FString {
 	return TEXT("");
 }
 
-static auto PluginBinariesDir() -> FString {
-	auto& fm = FPlatformFileManager::Get().GetPlatformFile();
-	auto  plugins_dir = FPaths::ProjectPluginsDir();
-	auto  plugin_dir = plugins_dir + "/" + "Ecsact";
-
-	return FPaths::Combine( //
-		FPaths::ProjectPluginsDir(),
-		"Ecsact",
-		"Binaries",
-		PlatformBinariesDirname()
-	);
-}
-
 static auto GetDirectoryWatcher() -> IDirectoryWatcher* {
 	auto& watcher = FModuleManager::LoadModuleChecked<FDirectoryWatcherModule>( //
 		TEXT("DirectoryWatcher")
 	);
 	return watcher.Get();
+}
+
+auto FEcsactEditorModule::GetInstalledPluginDir() -> FString {
+	auto Plugin = IPluginManager::Get().FindPlugin(TEXT("Ecsact"));
+	if(Plugin.IsValid()) {
+		return Plugin->GetBaseDir();
+	}
+	return FString{};
+}
+
+auto FEcsactEditorModule::GetEcsactSdkBinaryPath( //
+	FString BinaryName
+) -> FString {
+	auto plugin_install_dir = GetInstalledPluginDir();
+	if(plugin_install_dir.IsEmpty()) {
+		return BinaryName;
+	}
+
+	auto ecsact_sdk_dir = FPaths::Combine( //
+		plugin_install_dir,
+		"Source",
+		"ThirdParty",
+		"EcsactSDK"
+	);
+	if(!FPaths::DirectoryExists(ecsact_sdk_dir)) {
+		return BinaryName;
+	}
+
+#ifdef _WIN32
+	FString exe_suffix = ".exe";
+#else
+	FString exe_suffix = "";
+#endif
+
+	auto binary_path = FPaths::Combine( //
+		ecsact_sdk_dir,
+		"bin",
+		BinaryName + exe_suffix
+	);
+	if(!FPaths::FileExists(binary_path)) {
+		return BinaryName;
+	}
+
+	return binary_path;
+}
+
+auto FEcsactEditorModule::GetEcsactCli() -> FString {
+	return GetEcsactSdkBinaryPath("ecsact");
 }
 
 auto FEcsactEditorModule::SpawnEcsactCli(
@@ -123,7 +159,7 @@ auto FEcsactEditorModule::SpawnEcsactCli(
 
 	AsyncTask(
 		ENamedThreads::AnyBackgroundThreadNormalTask,
-		[=, OnExit = std::move(OnExit)] {
+		[=, this, OnExit = std::move(OnExit)] {
 			void* PipeWriteChild;
 			void* PipeReadChild;
 			void* PipeWriteParent;
@@ -133,7 +169,7 @@ auto FEcsactEditorModule::SpawnEcsactCli(
 
 			auto proc_id = uint32{};
 			auto proc_handle = FPlatformProcess::CreateProc(
-				TEXT("ecsact"),
+				*GetEcsactCli(),
 				*args_str,
 				false,
 				true,
@@ -263,12 +299,7 @@ auto FEcsactEditorModule::ShutdownModule() -> void {
 		SourceDir(),
 		SourcesWatchHandle
 	);
-	watcher->UnregisterDirectoryChangedCallback_Handle(
-		PluginBinariesDir(),
-		PluginBinariesWatchHandle
-	);
 	SourcesWatchHandle = {};
-	PluginBinariesWatchHandle = {};
 	FEditorDelegates::OnEditorInitialized.RemoveAll(this);
 }
 
@@ -396,7 +427,6 @@ auto FEcsactEditorModule::OnAssetsRemoved( //
 }
 
 auto FEcsactEditorModule::OnAssetRegistryFilesLoaded() -> void {
-	UE_LOG(LogTemp, Log, TEXT("OnAssetRegistryFilesLoaded"));
 }
 
 auto FEcsactEditorModule::AddMenuEntry(FMenuBuilder& MenuBuilder) -> void {

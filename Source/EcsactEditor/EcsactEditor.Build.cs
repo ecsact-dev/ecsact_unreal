@@ -34,6 +34,7 @@ public class EcsactEditor : ModuleRules {
 			"Slate",
 			"SlateCore",
 			"Json",
+			"Projects",
 		});
 
 		DynamicallyLoadedModuleNames.AddRange(new string[] {});

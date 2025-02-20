@@ -16,7 +16,6 @@ DECLARE_LOG_CATEGORY_EXTERN(EcsactEditor, Log, All);
 
 class ECSACTEDITOR_API FEcsactEditorModule : public IModuleInterface {
 	FDelegateHandle SourcesWatchHandle;
-	FDelegateHandle PluginBinariesWatchHandle;
 
 public:
 	using FOnExitDelegate = TDelegate<void(int32)>;
@@ -39,8 +38,12 @@ private:
 	auto OnAssetsUpdatedOnDisk(TConstArrayView<FAssetData> Assets) -> void;
 	auto OnAssetsRemoved(TConstArrayView<FAssetData> Assets) -> void;
 	auto OnAssetRegistryFilesLoaded() -> void;
+	auto GetInstalledPluginDir() -> FString;
+	auto GetEcsactSdkBinaryPath(FString BinaryName) -> FString;
 
 public:
+	auto GetEcsactCli() -> FString;
+
 	auto SpawnEcsactCli( //
 		const TArray<FString>& Args,
 		FOnReceiveLine         OnReceiveLine,
