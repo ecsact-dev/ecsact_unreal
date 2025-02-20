@@ -29,7 +29,7 @@ def ue-tool-extension [] {
 	}
 }
 
-export def package-plugin [--ue-install-dir: string] {
+export def package-plugin [--ue-install-dir: string, --keep-binaries] {
 	let install_dirs = if $ue_install_dir != null { [$ue_install_dir] } else { get-ue-install-dirs };
 	let plugin_dir = $env.FILE_PWD | path join '..' | path expand;
 	let dist_dir = [$plugin_dir, 'Dist'] | path join;
@@ -86,7 +86,11 @@ export def package-plugin [--ue-install-dir: string] {
 	
 	if $uat_exit_code == 0 {
 		print $"(ansi cyan)Creating archive ($dist_archive) from ($temp_package_dir)(ansi reset)";
-		tar -a -cf $dist_archive -C $temp_package_dir --exclude "Binaries" --exclude "Intermediate" --exclude "Tools" '*';
+		if $keep_binaries {
+			tar -a -cf $dist_archive -C $temp_package_dir --exclude "Tools" '*';
+		} else {
+			tar -a -cf $dist_archive -C $temp_package_dir --exclude "Binaries" --exclude "Intermediate" --exclude "Tools" '*';
+		}
 		rm -rf $temp_package_dir;
 	}
 
