@@ -23,17 +23,20 @@
 		{
 			"Name": "Ecsact",
 			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": ["Win64"]
 		},
 		{
 			"Name": "EcsactEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"PlatformAllowList": ["Win64"]
 		},
 		{
 			"Name": "EcsactUnrealCodegenPlugin",
 			"Type": "Editor",
-			"LoadingPhase": "None"
+			"LoadingPhase": "None",
+			"PlatformAllowList": ["Win64"]
 		}
 	]
 }
