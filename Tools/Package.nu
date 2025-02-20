@@ -85,7 +85,8 @@ export def package-plugin [--ue-install-dir: string] {
 	let uat_exit_code = $env.LAST_EXIT_CODE;
 	
 	if $uat_exit_code == 0 {
-		tar -a -cf $dist_archive -C $temp_package_dir '*';
+		print $"(ansi cyan)Creating archive ($dist_archive) from ($temp_package_dir)(ansi reset)";
+		tar -a -cf $dist_archive -C $temp_package_dir --exclude "Binaries" --exclude "Intermediate" --exclude "Tools" '*';
 		rm -rf $temp_package_dir;
 	}
 
