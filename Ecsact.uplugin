@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 4,
-	"VersionName": "0.2.2",
+	"Version": 5,
+	"VersionName": "0.2.3",
 	"FriendlyName": "Ecsact",
 	"Description": "Ecsact integration for Unreal Engine",
 	"Category": "Other",
@@ -24,19 +24,25 @@
 			"Name": "Ecsact",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault",
-			"PlatformAllowList": ["Win64"]
+			"PlatformAllowList": [
+				"Win64"
+			]
 		},
 		{
 			"Name": "EcsactEditor",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": ["Win64"]
+			"PlatformAllowList": [
+				"Win64"
+			]
 		},
 		{
 			"Name": "EcsactUnrealCodegenPlugin",
 			"Type": "Editor",
 			"LoadingPhase": "None",
-			"PlatformAllowList": ["Win64"]
+			"PlatformAllowList": [
+				"Win64"
+			]
 		}
 	]
 }
