@@ -30,24 +30,30 @@ public class EcsactUnrealCodegenPlugin : ModuleRules {
 
 	private string GetEcsactSdkIncludeDir() {
 		var includePath = "";
+		var startInfo = new ProcessStartInfo();
+		startInfo.FileName = GetEcsactSdkBinary("ecsact");
+		startInfo.Arguments = "config include_dir";
+		startInfo.RedirectStandardOutput = true;
+		startInfo.UseShellExecute = false;
+		startInfo.CreateNoWindow = true;
 
-		try {
-			var startInfo = new ProcessStartInfo();
-			startInfo.FileName = "ecsact";
-			startInfo.Arguments = "config include_dir";
-			startInfo.RedirectStandardOutput = true;
-			startInfo.UseShellExecute = false;
-			startInfo.CreateNoWindow = true;
-
-			using(Process process = Process.Start(startInfo)) {
-				using(StreamReader reader = process.StandardOutput) {
-					includePath = reader.ReadToEnd().Trim();
-				}
+		using(Process process = Process.Start(startInfo)) {
+			using(StreamReader reader = process.StandardOutput) {
+				includePath = reader.ReadToEnd().Trim();
 			}
-		} catch(Exception err) {
-			throw new EcsactSdkNotFound(err);
 		}
 
 		return includePath;
+	}
+
+	private string GetEcsactSdkBinary(string binaryName) {
+		var thirdPartyEcsactSdk =
+			Path.Combine(PluginDirectory, "ThirdParty/EcsactSDK");
+		var exePath = Path.Combine(thirdPartyEcsactSdk, $"bin/{binaryName}.exe");
+		if(File.Exists(exePath)) {
+			return exePath;
+		}
+
+		return binaryName;
 	}
 }

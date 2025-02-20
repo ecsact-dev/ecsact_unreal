@@ -83,3 +83,6 @@ Source/**/*.ecsact.*
 
 # Distribution files
 /Dist
+
+# Third party files that get filled in with release script
+/ThirdParty

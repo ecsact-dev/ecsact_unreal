@@ -40,17 +40,17 @@ public class Ecsact : ModuleRules {
 			PrivateDependencyModuleNames.Add("UnrealEd");
 		}
 
-		var EcsactSdkVersion = GetEcsactSdkVersion();
-		Environment.SetEnvironmentVariable(
-			"EcsactPlugin_SdkVersion",
-			EcsactSdkVersion
-		);
+		SetupEcsactSDK();
+	}
 
+	private void SetupEcsactSDK() {
+		var EcsactSdkVersion = GetEcsactSdkVersion();
 		var EcsactSdkIncludeDir = GetEcsactSdkIncludeDir();
 		PublicIncludePaths.Add(EcsactSdkIncludeDir);
 
-		// NOTE: For now these APIs are loaded on module startup
 		PublicDefinitions.AddRange(new string[] {
+			"WITH_ECSACT_SDK",
+			// NOTE: For now these APIs are loaded on module startup
 			"ECSACT_CORE_API_LOAD_AT_RUNTIME",
 			"ECSACT_DYNAMIC_API_LOAD_AT_RUNTIME",
 			"ECSACT_ASYNC_API_LOAD_AT_RUNTIME",
@@ -84,7 +84,7 @@ public class Ecsact : ModuleRules {
 
 		try {
 			var startInfo = new ProcessStartInfo();
-			startInfo.FileName = "ecsact";
+			startInfo.FileName = GetEcsactSdkBinary("ecsact");
 			startInfo.Arguments = "--version";
 			startInfo.RedirectStandardOutput = true;
 			startInfo.UseShellExecute = false;
@@ -111,7 +111,7 @@ public class Ecsact : ModuleRules {
 
 		try {
 			var startInfo = new ProcessStartInfo();
-			startInfo.FileName = "ecsact";
+			startInfo.FileName = GetEcsactSdkBinary("ecsact");
 			startInfo.Arguments = "config include_dir";
 			startInfo.RedirectStandardOutput = true;
 			startInfo.UseShellExecute = false;
@@ -129,10 +129,21 @@ public class Ecsact : ModuleRules {
 		return includePath;
 	}
 
+	private string GetEcsactSdkBinary(string binaryName) {
+		var thirdPartyEcsactSdk =
+			Path.Combine(PluginDirectory, "ThirdParty/EcsactSDK");
+		var exePath = Path.Combine(thirdPartyEcsactSdk, $"bin/{binaryName}.exe");
+		if(File.Exists(exePath)) {
+			return exePath;
+		}
+
+		return binaryName;
+	}
+
 	private void ExecEcsactCli(IList<string> Args) {
 		try {
 			var StartInfo = new ProcessStartInfo();
-			StartInfo.FileName = "ecsact";
+			StartInfo.FileName = GetEcsactSdkBinary("ecsact");
 			foreach(var Arg in Args) {
 				StartInfo.ArgumentList.Add(Arg);
 			}
