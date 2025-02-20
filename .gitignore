@@ -85,4 +85,4 @@ Source/**/*.ecsact.*
 /Dist
 
 # Third party files that get filled in with release script
-/ThirdParty
+/Source/ThirdParty

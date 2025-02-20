@@ -48,7 +48,7 @@ public class EcsactUnrealCodegenPlugin : ModuleRules {
 
 	private string GetEcsactSdkBinary(string binaryName) {
 		var thirdPartyEcsactSdk =
-			Path.Combine(PluginDirectory, "ThirdParty/EcsactSDK");
+			Path.Combine(PluginDirectory, "Source/ThirdParty/EcsactSDK");
 		var exePath = Path.Combine(thirdPartyEcsactSdk, $"bin/{binaryName}.exe");
 		if(File.Exists(exePath)) {
 			return exePath;
