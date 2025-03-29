@@ -34,6 +34,8 @@ def main [version: string, --dry] {
 
 	cd $ecsact_unreal_codegen_dir;
 	^bazel run //:CopyDist;
+	# TODO: the unreal packaging tools read the bazel symlinks. We need to either disable them or get unreal packaging tools to ignore them
+	^bazel clean;
 	cd $plugin_dir;
 	fetch-third-party;
 	package-plugin;
