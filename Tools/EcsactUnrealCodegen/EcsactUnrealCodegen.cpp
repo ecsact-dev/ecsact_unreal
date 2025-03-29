@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ranges>
 #include <filesystem>
 #ifdef __cpp_lib_execution
 #	include <execution>
@@ -152,6 +153,34 @@ auto is_clang_formattable(const fs::path& p) -> bool {
 		ext == ".hh" || ext == ".hpp";
 }
 
+auto trim_prefix(std::string_view str) -> std::string_view {
+	auto index = 0;
+	for(auto& c : str) {
+		if(!std::isspace(c)) {
+			break;
+		}
+		index += 1;
+	}
+
+	return str.substr(0, index);
+}
+
+auto trim_suffix(std::string_view str) -> std::string_view {
+	auto trim_count = 0;
+	for(auto& c : str | std::views::reverse) {
+		if(!std::isspace(c)) {
+			break;
+		}
+		trim_count += 1;
+	}
+
+	return str.substr(0, str.size() - trim_count);
+}
+
+auto trim(std::string_view str) -> std::string_view {
+	return trim_prefix(trim_suffix(str));
+}
+
 auto main(int argc, char* argv[]) -> int {
 	auto desc = po::options_description{};
 	auto pos_desc = po::positional_options_description{};
@@ -190,44 +219,6 @@ auto main(int argc, char* argv[]) -> int {
 	}
 
 	auto engine_dir = fs::path{vm.at("engine-dir").as<std::string>()};
-	auto engine_plugins_dir = engine_dir / "Plugins" / "Marketplace";
-	std::cout //
-		<< "INFO: engine directory is '" << engine_dir.generic_string() << "'\n";
-
-	auto ecsact_plugin_info = std::optional<plugin_dir_info>{};
-
-	for(auto entry : fs::directory_iterator{engine_plugins_dir}) {
-		auto info = get_plugin_dir_info(entry.path());
-		if(!info) {
-			continue;
-		}
-
-		if(info->plugin_name == "Ecsact") {
-			ecsact_plugin_info = info;
-		}
-	}
-
-	if(!ecsact_plugin_info) {
-		std::cerr //
-			<< "ERROR: unable to find the Ecsact Unreal plugin in '"
-			<< engine_plugins_dir.generic_string() << "'\n"
-			<< "INFO: see https://ecsact.dev/start/unreal for installation "
-				 "instructions\n";
-		return 1;
-	}
-
-	auto ecsact_unreal_codegen_plugin =
-		ecsact_plugin_info->plugin_path.parent_path() / "Binaries" / "Win64" /
-		"UnrealEditor-EcsactUnrealCodegenPlugin.dll";
-
-	if(!fs::exists(ecsact_unreal_codegen_plugin)) {
-		std::cerr //
-			<< "ERROR: the Ecsact Unreal plugin does not contain the built "
-				 "EcsactUnrealCodegenPlugin - please make sure you have installed the "
-				 "Ecsact Unreal plugin correctly\n";
-		return 1;
-	}
-
 	auto project_dir = fs::path{};
 	auto project_file = fs::path{};
 	if(vm.count("project-path") == 0) {
@@ -280,6 +271,60 @@ auto main(int argc, char* argv[]) -> int {
 	assert(!project_dir.empty());
 	assert(!project_file.empty());
 
+	auto engine_plugins_dir = engine_dir / "Plugins" / "Marketplace";
+	auto project_plugins_dir = project_dir / "Plugins";
+	std::cout //
+		<< "INFO: engine directory is '" << engine_dir.generic_string() << "'\n";
+
+	auto ecsact_plugin_info = std::optional<plugin_dir_info>{};
+
+	if(fs::exists(project_plugins_dir)) {
+		for(auto entry : fs::directory_iterator{project_plugins_dir}) {
+			auto info = get_plugin_dir_info(entry.path());
+			if(!info) {
+				continue;
+			}
+
+			if(info->plugin_name == "Ecsact") {
+				ecsact_plugin_info = info;
+			}
+		}
+	}
+
+	if(!ecsact_plugin_info && fs::exists(engine_plugins_dir)) {
+		for(auto entry : fs::directory_iterator{engine_plugins_dir}) {
+			auto info = get_plugin_dir_info(entry.path());
+			if(!info) {
+				continue;
+			}
+
+			if(info->plugin_name == "Ecsact") {
+				ecsact_plugin_info = info;
+			}
+		}
+	}
+
+	if(!ecsact_plugin_info) {
+		std::cerr //
+			<< "ERROR: unable to find the Ecsact Unreal plugin in '"
+			<< engine_plugins_dir.generic_string() << "'\n"
+			<< "INFO: see https://ecsact.dev/start/unreal for installation "
+				 "instructions\n";
+		return 1;
+	}
+
+	auto ecsact_unreal_codegen_plugin =
+		ecsact_plugin_info->plugin_path.parent_path() / "Binaries" / "Win64" /
+		"UnrealEditor-EcsactUnrealCodegenPlugin.dll";
+
+	if(!fs::exists(ecsact_unreal_codegen_plugin)) {
+		std::cerr //
+			<< "ERROR: the Ecsact Unreal plugin does not contain the built "
+				 "EcsactUnrealCodegenPlugin - please make sure you have installed the "
+				 "Ecsact Unreal plugin correctly\n";
+		return 1;
+	}
+
 	auto env = boost::process::native_environment{};
 	auto ecsact_cli = find_ecsact_exe(argv[0]);
 	if(!ecsact_cli) {
@@ -299,7 +344,7 @@ auto main(int argc, char* argv[]) -> int {
 		return 1;
 	}
 
-	std::cout << "INFO: ecsact version " << *version << "\n";
+	std::cout << "INFO: ecsact version " << trim(*version) << "\n";
 
 	auto source_dir = project_dir / "Source";
 	if(!fs::exists(source_dir)) {
