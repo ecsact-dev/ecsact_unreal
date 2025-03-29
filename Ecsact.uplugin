@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 5,
-	"VersionName": "0.2.3",
+	"Version": 6,
+	"VersionName": "0.2.4",
 	"FriendlyName": "Ecsact",
 	"Description": "Ecsact integration for Unreal Engine",
 	"Category": "Other",
