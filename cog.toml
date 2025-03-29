@@ -1,9 +1,0 @@
-pre_bump_hooks = [
-	"nu -c \"open Ecsact.uplugin | from json | update VersionName '{{version}}' | to json -t 1 | save Ecsact.uplugin -f\"",
-]
-
-post_bump_hooks = [
-	"git push",
-	"git push origin {{version}}",
-	"gh release create {{version}} --generate-notes --latest -t {{version}} --verify-tag",
-]
